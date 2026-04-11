@@ -269,6 +269,7 @@ const ServicesTab = () => {
 // ─── Settings Tab ───
 const SettingsTab = () => {
   const [settings, setSettings] = useState<any>(null);
+  const [connectingCal, setConnectingCal] = useState(false);
 
   useEffect(() => {
     supabase.from("settings").select("*").limit(1).single().then(({ data }) => setSettings(data));
@@ -279,36 +280,78 @@ const SettingsTab = () => {
     const { id, created_at, ...rest } = settings;
     await supabase.from("settings").update(rest).eq("id", id);
     toast.success("Configurações salvas");
-    // Apply theme
     document.documentElement.setAttribute("data-theme", settings.current_theme === "purple-cyber" ? "" : settings.current_theme);
+  };
+
+  const connectGoogleCalendar = async () => {
+    setConnectingCal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("google-calendar-auth", {
+        body: {
+          action: "get_auth_url",
+          redirect_uri: `${window.location.origin}/auth/google/callback`,
+        },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || "Erro ao obter URL de autorização");
+        return;
+      }
+      window.location.href = data.auth_url;
+    } catch {
+      toast.error("Erro ao conectar Google Calendar");
+    } finally {
+      setConnectingCal(false);
+    }
   };
 
   if (!settings) return <p className="text-muted-foreground">Carregando...</p>;
 
   return (
-    <GlassCard animate={false}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div><Label>Abertura</Label><Input value={settings.opening_time} onChange={e => setSettings({ ...settings, opening_time: e.target.value })} /></div>
-        <div><Label>Fechamento</Label><Input value={settings.closing_time} onChange={e => setSettings({ ...settings, closing_time: e.target.value })} /></div>
-        <div><Label>Intervalo (min)</Label><Input type="number" value={settings.appointment_interval} onChange={e => setSettings({ ...settings, appointment_interval: parseInt(e.target.value) || 30 })} /></div>
-        <div><Label>Pontos por agendamento</Label><Input type="number" value={settings.loyalty_points_per_booking} onChange={e => setSettings({ ...settings, loyalty_points_per_booking: parseInt(e.target.value) || 10 })} /></div>
-        <div className="col-span-full"><Label>Endereço</Label><Input value={settings.barber_address || ""} onChange={e => setSettings({ ...settings, barber_address: e.target.value })} /></div>
-        <div>
-          <Label>Tema</Label>
-          <Select value={settings.current_theme} onValueChange={v => setSettings({ ...settings, current_theme: v })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="purple-cyber">Roxo Cyber</SelectItem>
-              <SelectItem value="green-neon">Verde Neon</SelectItem>
-              <SelectItem value="blue-electric">Azul Elétrico</SelectItem>
-              <SelectItem value="orange-flame">Laranja Chama</SelectItem>
-              <SelectItem value="pink-neon">Rosa Neon</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="space-y-6">
+      {/* Google Calendar Connection */}
+      <GlassCard animate={false}>
+        <h3 className="font-display text-sm tracking-wider mb-3">GOOGLE CALENDAR</h3>
+        {settings.google_calendar_connected ? (
+          <div className="flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+            <span className="text-sm text-muted-foreground">Conectado • {settings.google_calendar_id}</span>
+          </div>
+        ) : (
+          <div>
+            <p className="text-sm text-muted-foreground mb-3">Conecte seu Google Calendar para sincronizar agendamentos automaticamente.</p>
+            <Button variant="neon" onClick={connectGoogleCalendar} disabled={connectingCal}>
+              {connectingCal ? "Redirecionando..." : "🔗 Conectar Google Calendar"}
+            </Button>
+          </div>
+        )}
+      </GlassCard>
+
+      {/* General Settings */}
+      <GlassCard animate={false}>
+        <h3 className="font-display text-sm tracking-wider mb-3">CONFIGURAÇÕES GERAIS</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><Label>Abertura</Label><Input value={settings.opening_time} onChange={e => setSettings({ ...settings, opening_time: e.target.value })} /></div>
+          <div><Label>Fechamento</Label><Input value={settings.closing_time} onChange={e => setSettings({ ...settings, closing_time: e.target.value })} /></div>
+          <div><Label>Intervalo (min)</Label><Input type="number" value={settings.appointment_interval} onChange={e => setSettings({ ...settings, appointment_interval: parseInt(e.target.value) || 30 })} /></div>
+          <div><Label>Pontos por agendamento</Label><Input type="number" value={settings.loyalty_points_per_booking} onChange={e => setSettings({ ...settings, loyalty_points_per_booking: parseInt(e.target.value) || 10 })} /></div>
+          <div className="col-span-full"><Label>Endereço</Label><Input value={settings.barber_address || ""} onChange={e => setSettings({ ...settings, barber_address: e.target.value })} /></div>
+          <div>
+            <Label>Tema</Label>
+            <Select value={settings.current_theme} onValueChange={v => setSettings({ ...settings, current_theme: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="purple-cyber">Roxo Cyber</SelectItem>
+                <SelectItem value="green-neon">Verde Neon</SelectItem>
+                <SelectItem value="blue-electric">Azul Elétrico</SelectItem>
+                <SelectItem value="orange-flame">Laranja Chama</SelectItem>
+                <SelectItem value="pink-neon">Rosa Neon</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
-      <Button variant="neon" className="mt-6" onClick={save}>SALVAR CONFIGURAÇÕES</Button>
-    </GlassCard>
+        <Button variant="neon" className="mt-6" onClick={save}>SALVAR CONFIGURAÇÕES</Button>
+      </GlassCard>
+    </div>
   );
 };
 

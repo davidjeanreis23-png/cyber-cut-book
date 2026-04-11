@@ -10,6 +10,7 @@ import Booking from "./pages/Booking";
 import Appointments from "./pages/Appointments";
 import Loyalty from "./pages/Loyalty";
 import Admin from "./pages/Admin";
+import GoogleCalendarCallback from "./pages/GoogleCalendarCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/appointments" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
             <Route path="/loyalty" element={<ProtectedRoute><Loyalty /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+            <Route path="/auth/google/callback" element={<ProtectedRoute><GoogleCalendarCallback /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

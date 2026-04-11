@@ -305,8 +305,11 @@ export type Database = {
           created_at: string
           current_theme: Database["public"]["Enums"]["theme_option"]
           default_appointment_duration: number
+          google_access_token: string | null
           google_calendar_connected: boolean
           google_calendar_id: string | null
+          google_refresh_token: string | null
+          google_token_expires_at: string | null
           id: string
           loyalty_points_per_booking: number
           opening_time: string
@@ -322,8 +325,11 @@ export type Database = {
           created_at?: string
           current_theme?: Database["public"]["Enums"]["theme_option"]
           default_appointment_duration?: number
+          google_access_token?: string | null
           google_calendar_connected?: boolean
           google_calendar_id?: string | null
+          google_refresh_token?: string | null
+          google_token_expires_at?: string | null
           id?: string
           loyalty_points_per_booking?: number
           opening_time?: string
@@ -339,8 +345,11 @@ export type Database = {
           created_at?: string
           current_theme?: Database["public"]["Enums"]["theme_option"]
           default_appointment_duration?: number
+          google_access_token?: string | null
           google_calendar_connected?: boolean
           google_calendar_id?: string | null
+          google_refresh_token?: string | null
+          google_token_expires_at?: string | null
           id?: string
           loyalty_points_per_booking?: number
           opening_time?: string
