@@ -142,7 +142,7 @@ const Booking = () => {
       return;
     }
 
-    const { error } = await supabase.from("appointments").insert({
+    const { data: newAppt, error } = await supabase.from("appointments").insert({
       user_id: user.id,
       barber_id: selectedBarber,
       service_id: selectedService,
@@ -152,14 +152,66 @@ const Booking = () => {
       payment_status: paymentMethod === "local" ? "waived" : "pending",
       payment_method: paymentMethod,
       notes: notes || null,
-    });
+    }).select("id").single();
 
-    if (error) {
+    if (error || !newAppt) {
       toast.error("Erro ao agendar. Tente novamente.");
-    } else {
-      toast.success("Agendamento confirmado!");
-      navigate("/appointments");
+      setSubmitting(false);
+      return;
     }
+
+    // Send confirmation email
+    try {
+      await supabase.functions.invoke("send-booking-email", {
+        body: {
+          to: user.email,
+          subject: "Confirmação de Agendamento - AutoBarber",
+          appointment: {
+            barber_name: selectedBarberData?.name,
+            service_name: selectedServiceData?.name,
+            date: format(selectedDate, "dd/MM/yyyy"),
+            time: selectedTime,
+            price: selectedServiceData?.price,
+          },
+        },
+      });
+    } catch (e) {
+      console.error("Email error:", e);
+    }
+
+    // Sync with Google Calendar
+    try {
+      await supabase.functions.invoke("sync-google-calendar", {
+        body: { appointment_id: newAppt.id },
+      });
+    } catch (e) {
+      console.error("Calendar sync error:", e);
+    }
+
+    // If online payment, create Mercado Pago preference
+    if (paymentMethod !== "local") {
+      try {
+        const { data: mpData } = await supabase.functions.invoke("create-payment", {
+          body: {
+            appointment_id: newAppt.id,
+            service_name: selectedServiceData?.name,
+            price: selectedServiceData?.price,
+            payer_email: user.email,
+          },
+        });
+
+        if (mpData?.init_point) {
+          window.location.href = mpData.init_point;
+          return;
+        }
+      } catch (e) {
+        console.error("Payment error:", e);
+        toast.error("Erro ao criar pagamento. Agendamento foi criado.");
+      }
+    }
+
+    toast.success("Agendamento confirmado!");
+    navigate("/appointments");
     setSubmitting(false);
   };
 
