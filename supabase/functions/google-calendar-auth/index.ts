@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID");
+    const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID") || Deno.env.get("ID_DO_CLIENTE_DO_GOOGLE");
     const GOOGLE_CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET");
 
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
