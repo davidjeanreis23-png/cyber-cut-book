@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 async function getValidAccessToken(supabaseAdmin: any, settings: any) {
-  const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID")!;
+  const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID") || Deno.env.get("ID_DO_CLIENTE_DO_GOOGLE")!;
   const GOOGLE_CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
 
   const expiresAt = new Date(settings.google_token_expires_at);
