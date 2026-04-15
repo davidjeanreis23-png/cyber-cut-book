@@ -269,7 +269,7 @@ const ServicesTab = () => {
 // ─── Settings Tab ───
 const SettingsTab = () => {
   const [settings, setSettings] = useState<any>(null);
-  const [connectingCal, setConnectingCal] = useState(false);
+  
 
   useEffect(() => {
     supabase.from("settings").select("*").limit(1).single().then(({ data }) => setSettings(data));
