@@ -269,7 +269,7 @@ const ServicesTab = () => {
 // ─── Settings Tab ───
 const SettingsTab = () => {
   const [settings, setSettings] = useState<any>(null);
-  const [connectingCal, setConnectingCal] = useState(false);
+  
 
   useEffect(() => {
     supabase.from("settings").select("*").limit(1).single().then(({ data }) => setSettings(data));
@@ -283,47 +283,18 @@ const SettingsTab = () => {
     document.documentElement.setAttribute("data-theme", settings.current_theme === "purple-cyber" ? "" : settings.current_theme);
   };
 
-  const connectGoogleCalendar = async () => {
-    setConnectingCal(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("google-calendar-auth", {
-        body: {
-          action: "get_auth_url",
-          redirect_uri: `${window.location.origin}/auth/google/callback`,
-        },
-      });
-      if (error || data?.error) {
-        toast.error(data?.error || "Erro ao obter URL de autorização");
-        return;
-      }
-      window.location.href = data.auth_url;
-    } catch {
-      toast.error("Erro ao conectar Google Calendar");
-    } finally {
-      setConnectingCal(false);
-    }
-  };
-
   if (!settings) return <p className="text-muted-foreground">Carregando...</p>;
 
   return (
     <div className="space-y-6">
-      {/* Google Calendar Connection */}
+      {/* Google Calendar - Service Account */}
       <GlassCard animate={false}>
         <h3 className="font-display text-sm tracking-wider mb-3">GOOGLE CALENDAR</h3>
-        {settings.google_calendar_connected ? (
-          <div className="flex items-center gap-2">
-            <span className="inline-block h-2 w-2 rounded-full bg-primary" />
-            <span className="text-sm text-muted-foreground">Conectado • {settings.google_calendar_id}</span>
-          </div>
-        ) : (
-          <div>
-            <p className="text-sm text-muted-foreground mb-3">Conecte seu Google Calendar para sincronizar agendamentos automaticamente.</p>
-            <Button variant="neon" onClick={connectGoogleCalendar} disabled={connectingCal}>
-              {connectingCal ? "Redirecionando..." : "🔗 Conectar Google Calendar"}
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+          <span className="text-sm text-muted-foreground">Conectado via Service Account • davidjeanreis.29@gmail.com</span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">Eventos são sincronizados automaticamente ao confirmar ou cancelar agendamentos.</p>
       </GlassCard>
 
       {/* General Settings */}
