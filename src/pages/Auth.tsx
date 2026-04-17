@@ -27,7 +27,16 @@ const Auth = () => {
     if (isLogin) {
       const { error } = await signIn(email, password);
       if (error) {
-        toast.error(error.message || "Erro ao entrar");
+        const msg = (error.message || "").toLowerCase();
+        if (msg.includes("invalid login credentials")) {
+          toast.error("E-mail ou senha incorretos");
+        } else if (msg.includes("email not confirmed")) {
+          toast.error("Confirme seu e-mail antes de entrar");
+        } else if (msg.includes("failed to fetch") || msg.includes("networkerror")) {
+          toast.error("Sem conexão com o servidor. Desative bloqueadores/extensões e tente novamente.");
+        } else {
+          toast.error(error.message || "Erro ao entrar");
+        }
       } else {
         toast.success("Login realizado com sucesso!");
         navigate("/");
