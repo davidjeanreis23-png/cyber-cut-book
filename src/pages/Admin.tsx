@@ -13,10 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { BarChart3, Calendar, Users, Scissors, Award, Settings, CreditCard, Bell, MapPin } from "lucide-react";
+import { BarChart3, Calendar, Users, Scissors, Award, Settings, CreditCard, Bell, MapPin, DollarSign, FileBarChart, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import ConfirmDeleteButton from "@/components/ConfirmDeleteButton";
+import FinancialTab from "@/components/admin/FinancialTab";
+import ReportsTab from "@/components/admin/ReportsTab";
+import ClientsTab from "@/components/admin/ClientsTab";
 
 // ─── Stats Tab ───
 const StatsTab = () => {
@@ -404,6 +407,9 @@ const Admin = () => {
               {[
                 { v: "stats", icon: BarChart3, label: "Estatísticas" },
                 { v: "appointments", icon: Calendar, label: "Agendamentos" },
+                { v: "financial", icon: DollarSign, label: "Financeiro" },
+                { v: "reports", icon: FileBarChart, label: "Relatórios" },
+                { v: "clients", icon: UserCircle, label: "Clientes" },
                 { v: "barbers", icon: Scissors, label: "Barbeiros" },
                 { v: "services", icon: Users, label: "Serviços" },
                 { v: "settings", icon: Settings, label: "Configurações" },
@@ -421,6 +427,9 @@ const Admin = () => {
 
           <TabsContent value="stats"><StatsTab /></TabsContent>
           <TabsContent value="appointments"><AppointmentsTab /></TabsContent>
+          <TabsContent value="financial"><FinancialTab /></TabsContent>
+          <TabsContent value="reports"><ReportsTab /></TabsContent>
+          <TabsContent value="clients"><ClientsTab /></TabsContent>
           <TabsContent value="barbers"><BarbersTab /></TabsContent>
           <TabsContent value="services"><ServicesTab /></TabsContent>
           <TabsContent value="settings"><SettingsTab /></TabsContent>
