@@ -20,10 +20,6 @@ const Auth = () => {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
-  const isPreviewHost =
-    typeof window !== "undefined" && window.location.hostname.includes("id-preview--");
-  const publishedUrl = "https://cyber-cut-book.lovable.app/auth";
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
