@@ -51,38 +51,20 @@ serve(async (req) => {
       </div>
     `;
 
-    // Try gateway first, fall back to direct API
-    let response;
-    if (LOVABLE_API_KEY) {
-      response = await fetch(`${GATEWAY_URL}/emails`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "X-Connection-Api-Key": RESEND_API_KEY,
-        },
-        body: JSON.stringify({
-          from: `AutoBarber <${EMAIL_FROM}>`,
-          to: [to],
-          subject: subject || "Confirmação de Agendamento - AutoBarber",
-          html,
-        }),
-      });
-    } else {
-      response = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: `AutoBarber <${EMAIL_FROM}>`,
-          to: [to],
-          subject: subject || "Confirmação de Agendamento - AutoBarber",
-          html,
-        }),
-      });
-    }
+    // Use Resend API directly (gateway requires connector setup)
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: `AutoBarber <${EMAIL_FROM}>`,
+        to: [to],
+        subject: subject || "Confirmação de Agendamento - AutoBarber",
+        html,
+      }),
+    });
 
     const data = await response.json();
 
