@@ -205,15 +205,24 @@ serve(async (req) => {
     const accessToken = await getServiceAccountToken();
     console.log("Auth inicializado para operação:", action || "create");
 
+    console.log("Buscando appointment_id:", appointment_id);
     const { data: appt, error: apptError } = await supabaseAdmin
       .from("appointments")
       .select("*, barbers(name), services(name, duration_minutes), profiles(full_name, email)")
       .eq("id", appointment_id)
-      .single();
+      .maybeSingle();
 
-    if (apptError || !appt) {
-      console.error("Appointment not found:", apptError?.message);
-      return new Response(JSON.stringify({ error: "Appointment not found" }), {
+    if (apptError) {
+      console.error("Erro ao buscar appointment:", apptError.message, apptError);
+      return new Response(JSON.stringify({ error: "Database error", details: apptError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!appt) {
+      console.error("Appointment não encontrado para ID:", appointment_id);
+      return new Response(JSON.stringify({ error: "Appointment not found", appointment_id }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
