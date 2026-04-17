@@ -228,7 +228,7 @@ const Booking = () => {
   return (
     <div className="min-h-screen">
       <AppHeader />
-      <ThemeToggle />
+      
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         <h1 className="font-display text-2xl text-center tracking-wider text-neon mb-6">AGENDAR</h1>
         <StepperBar steps={STEPS} currentStep={step} />

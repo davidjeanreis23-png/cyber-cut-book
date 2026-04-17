@@ -340,7 +340,7 @@ const Admin = () => {
   return (
     <div className="min-h-screen">
       <AppHeader />
-      <ThemeToggle />
+      
       <main className="container mx-auto px-4 py-8 max-w-5xl">
         <h1 className="font-display text-2xl text-center tracking-wider text-neon mb-8">PAINEL ADMIN</h1>
 
