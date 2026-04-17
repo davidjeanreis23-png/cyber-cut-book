@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import ConfirmDeleteButton from "@/components/ConfirmDeleteButton";
 
 interface Appointment {
   id: string;
@@ -59,8 +60,26 @@ const Appointments = () => {
 
   const handleCancel = async (id: string) => {
     const { error } = await supabase.from("appointments").update({ status: "cancelled" as any }).eq("id", id);
-    if (error) toast.error("Erro ao cancelar");
-    else { toast.success("Agendamento cancelado"); fetchAppointments(); }
+    if (error) { toast.error("Erro ao cancelar"); return; }
+    // Remove do Google Calendar (best effort)
+    try {
+      await supabase.functions.invoke("sync-google-calendar", {
+        body: { appointment_id: id, action: "delete" },
+      });
+    } catch (e) { console.error("Calendar sync error:", e); }
+    toast.success("Agendamento cancelado");
+    fetchAppointments();
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await supabase.functions.invoke("sync-google-calendar", {
+        body: { appointment_id: id, action: "delete" },
+      });
+    } catch (e) { console.error("Calendar sync error:", e); }
+    const { error } = await supabase.from("appointments").delete().eq("id", id);
+    if (error) toast.error("Erro ao excluir");
+    else { toast.success("Agendamento excluído"); fetchAppointments(); }
   };
 
   const filtered = appointments.filter(a => {
