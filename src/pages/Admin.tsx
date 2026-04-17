@@ -274,6 +274,12 @@ const ServicesTab = () => {
     fetch();
   };
 
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("services").delete().eq("id", id);
+    if (error) toast.error("Erro ao excluir. Pode existir agendamento vinculado.");
+    else { toast.success("Serviço excluído"); fetch(); }
+  };
+
   return (
     <div className="space-y-6">
       <GlassCard animate={false}>
@@ -294,13 +300,18 @@ const ServicesTab = () => {
       <div className="space-y-3">
         {services.map(s => (
           <GlassCard key={s.id} animate={false} className="flex items-center justify-between py-3">
-            <div>
-              <p className="font-display text-sm tracking-wider">{s.name}</p>
-              <p className="text-xs text-muted-foreground">{s.duration_minutes}min • R$ {Number(s.price).toFixed(2)} {s.category && `• ${s.category}`}</p>
+            <div className="flex-1 min-w-0">
+              <p className="font-body font-semibold text-base">{s.name}</p>
+              <p className="text-sm text-muted-foreground">{s.duration_minutes}min • R$ {Number(s.price).toFixed(2)} {s.category && `• ${s.category}`}</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
               <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s.id, s.is_active)} />
               <Button variant="ghost" size="sm" onClick={() => edit(s)}>Editar</Button>
+              <ConfirmDeleteButton
+                onConfirm={() => remove(s.id)}
+                title={`Excluir ${s.name}?`}
+                description="Esta ação não pode ser desfeita."
+              />
             </div>
           </GlassCard>
         ))}
