@@ -94,18 +94,6 @@ const Auth = () => {
           </p>
         </div>
 
-        {isPreviewHost && (
-          <div className="mb-4 rounded-md border border-primary/40 bg-primary/10 p-3 text-xs text-foreground">
-            O login por e-mail/senha não funciona no preview do editor. Acesse o
-            site publicado:{" "}
-            <a
-              href={publishedUrl}
-              className="font-semibold text-primary underline"
-            >
-              cyber-cut-book.lovable.app
-            </a>
-          </div>
-        )}
 
         {/* Google Login */}
         <Button
