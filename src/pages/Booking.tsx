@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
-import ThemeToggle from "@/components/ThemeToggle";
+
 import GlassCard from "@/components/GlassCard";
 import StepperBar from "@/components/StepperBar";
 import { Button } from "@/components/ui/button";

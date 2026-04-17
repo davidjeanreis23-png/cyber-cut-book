@@ -5,7 +5,7 @@ import { Scissors, Calendar, CreditCard, Users } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import FloatingParticles from "@/components/FloatingParticles";
 import GlassCard from "@/components/GlassCard";
-import ThemeToggle from "@/components/ThemeToggle";
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,7 +32,6 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <AppHeader />
-      <ThemeToggle />
 
       {/* Hero */}
       <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
