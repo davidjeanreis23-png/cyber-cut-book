@@ -396,22 +396,28 @@ const Admin = () => {
       <AppHeader />
       
       <main className="container mx-auto px-4 py-8 max-w-5xl">
-        <h1 className="font-display text-2xl text-center tracking-wider text-neon mb-8">PAINEL ADMIN</h1>
+        <h1 className="font-display text-4xl text-center tracking-wider text-neon mb-8">PAINEL ADMIN</h1>
 
         <Tabs defaultValue="stats" className="w-full">
-          <TabsList className="w-full flex flex-wrap gap-1 h-auto bg-card border border-neon p-1 mb-6">
-            {[
-              { v: "stats", icon: BarChart3, label: "Estatísticas" },
-              { v: "appointments", icon: Calendar, label: "Agendamentos" },
-              { v: "barbers", icon: Scissors, label: "Barbeiros" },
-              { v: "services", icon: Users, label: "Serviços" },
-              { v: "settings", icon: Settings, label: "Configurações" },
-            ].map(t => (
-              <TabsTrigger key={t.v} value={t.v} className="flex items-center gap-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <t.icon className="h-3.5 w-3.5" />{t.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="tabs-scroll mb-6 -mx-2 px-2">
+            <TabsList className="inline-flex w-max gap-2 h-auto bg-card border border-neon p-1.5 rounded-full">
+              {[
+                { v: "stats", icon: BarChart3, label: "Estatísticas" },
+                { v: "appointments", icon: Calendar, label: "Agendamentos" },
+                { v: "barbers", icon: Scissors, label: "Barbeiros" },
+                { v: "services", icon: Users, label: "Serviços" },
+                { v: "settings", icon: Settings, label: "Configurações" },
+              ].map(t => (
+                <TabsTrigger
+                  key={t.v}
+                  value={t.v}
+                  className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-full whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <t.icon className="h-4 w-4" />{t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           <TabsContent value="stats"><StatsTab /></TabsContent>
           <TabsContent value="appointments"><AppointmentsTab /></TabsContent>
