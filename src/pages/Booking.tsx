@@ -9,7 +9,7 @@ import StepperBar from "@/components/StepperBar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { Scissors, Clock, DollarSign } from "lucide-react";
+import { Scissors, Clock, DollarSign, MapPin, Banknote, CreditCard as CreditCardIcon, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format, isBefore, startOfDay, isToday } from "date-fns";
@@ -24,7 +24,7 @@ interface Service {
   id: string; name: string; description: string | null; duration_minutes: number; price: number; category: string | null;
 }
 interface Settings {
-  opening_time: string; closing_time: string; appointment_interval: number;
+  opening_time: string; closing_time: string; appointment_interval: number; barber_address?: string | null;
 }
 interface Schedule {
   day_of_week: number; start_time: string; end_time: string; is_active: boolean;
@@ -53,7 +53,7 @@ const Booking = () => {
       const [b, s, set] = await Promise.all([
         supabase.from("barbers").select("id,name,photo_url,specialties").eq("is_active", true),
         supabase.from("services").select("id,name,description,duration_minutes,price,category").eq("is_active", true),
-        supabase.from("settings").select("opening_time,closing_time,appointment_interval").limit(1).single(),
+        supabase.from("settings").select("opening_time,closing_time,appointment_interval,barber_address").limit(1).single(),
       ]);
       if (b.data) setBarbers(b.data);
       if (s.data) setServices(s.data);
