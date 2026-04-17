@@ -20,6 +20,10 @@ const Auth = () => {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
+  const isPreviewHost =
+    typeof window !== "undefined" && window.location.hostname.includes("id-preview--");
+  const publishedUrl = "https://cyber-cut-book.lovable.app/auth";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -93,6 +97,19 @@ const Auth = () => {
             {isLogin ? "Acesse sua conta" : "Crie sua conta"}
           </p>
         </div>
+
+        {isPreviewHost && (
+          <div className="mb-4 rounded-md border border-primary/40 bg-primary/10 p-3 text-xs text-foreground">
+            O login por e-mail/senha não funciona no preview do editor. Acesse o
+            site publicado:{" "}
+            <a
+              href={publishedUrl}
+              className="font-semibold text-primary underline"
+            >
+              cyber-cut-book.lovable.app
+            </a>
+          </div>
+        )}
 
         {/* Google Login */}
         <Button
