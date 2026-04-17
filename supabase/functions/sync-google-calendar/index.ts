@@ -208,9 +208,21 @@ serve(async (req) => {
     console.log("Buscando appointment_id:", appointment_id);
     const { data: appt, error: apptError } = await supabaseAdmin
       .from("appointments")
-      .select("*, barbers(name), services(name, duration_minutes), profiles(full_name, email)")
+      .select("*, barbers(name), services(name, duration_minutes)")
       .eq("id", appointment_id)
       .maybeSingle();
+
+    // Fetch profile separately (no FK between appointments and profiles)
+    let profile: { full_name: string | null; email: string | null } | null = null;
+    if (appt?.user_id) {
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", appt.user_id)
+        .maybeSingle();
+      profile = prof;
+      console.log("Profile encontrado:", !!prof);
+    }
 
     if (apptError) {
       console.error("Erro ao buscar appointment:", apptError.message, apptError);
