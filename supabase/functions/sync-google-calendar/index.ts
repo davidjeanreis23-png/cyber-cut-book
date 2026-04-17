@@ -279,7 +279,7 @@ serve(async (req) => {
 
     const event = {
       summary: `AutoBarber - ${(appt as any).services?.name || "Agendamento"} com ${(appt as any).barbers?.name || "N/A"}`,
-      description: `Cliente: ${(appt as any).profiles?.full_name || "N/A"}\nE-mail: ${(appt as any).profiles?.email || "N/A"}`,
+      description: `Cliente: ${profile?.full_name || "N/A"}\nE-mail: ${profile?.email || "N/A"}`,
       start: { dateTime: `${startDateTime}-03:00`, timeZone: "America/Sao_Paulo" },
       end: { dateTime: endDate.toISOString(), timeZone: "America/Sao_Paulo" },
       reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 30 }] },
