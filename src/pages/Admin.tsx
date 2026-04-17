@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { BarChart3, Calendar, Users, Scissors, Award, Settings, CreditCard, Bell } from "lucide-react";
+import { BarChart3, Calendar, Users, Scissors, Award, Settings, CreditCard, Bell, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import ConfirmDeleteButton from "@/components/ConfirmDeleteButton";
 
 // ─── Stats Tab ───
 const StatsTab = () => {
@@ -78,6 +79,22 @@ const AppointmentsTab = () => {
     await supabase.from("appointments").update({ status: status as any }).eq("id", id);
     toast.success("Status atualizado");
     fetchAppts();
+  };
+
+  const deleteAppt = async (id: string, googleEventId: string | null) => {
+    // Tenta remover do Google Calendar primeiro (best effort)
+    if (googleEventId) {
+      try {
+        await supabase.functions.invoke("sync-google-calendar", {
+          body: { appointment_id: id, action: "delete" },
+        });
+      } catch (e) {
+        console.error("Erro ao remover do Google Calendar:", e);
+      }
+    }
+    const { error } = await supabase.from("appointments").delete().eq("id", id);
+    if (error) toast.error("Erro ao excluir agendamento");
+    else { toast.success("Agendamento excluído"); fetchAppts(); }
   };
 
   const filtered = appts.filter(a => statusF === "all" || a.status === statusF);
