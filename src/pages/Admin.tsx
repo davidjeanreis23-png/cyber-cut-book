@@ -190,6 +190,12 @@ const BarbersTab = () => {
     fetch();
   };
 
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("barbers").delete().eq("id", id);
+    if (error) toast.error("Erro ao excluir. Pode existir agendamento vinculado.");
+    else { toast.success("Barbeiro excluído"); fetch(); }
+  };
+
   return (
     <div className="space-y-6">
       <GlassCard animate={false}>
@@ -209,13 +215,18 @@ const BarbersTab = () => {
       <div className="space-y-3">
         {barbers.map(b => (
           <GlassCard key={b.id} animate={false} className="flex items-center justify-between py-3">
-            <div>
-              <p className="font-display text-sm tracking-wider">{b.name}</p>
-              <p className="text-xs text-muted-foreground">{b.specialties?.join(", ") || "—"}</p>
+            <div className="flex-1 min-w-0">
+              <p className="font-body font-semibold text-base">{b.name}</p>
+              <p className="text-sm text-muted-foreground">{b.specialties?.join(", ") || "—"}</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
               <Switch checked={b.is_active} onCheckedChange={() => toggleActive(b.id, b.is_active)} />
               <Button variant="ghost" size="sm" onClick={() => edit(b)}>Editar</Button>
+              <ConfirmDeleteButton
+                onConfirm={() => remove(b.id)}
+                title={`Excluir ${b.name}?`}
+                description="Esta ação não pode ser desfeita."
+              />
             </div>
           </GlassCard>
         ))}
