@@ -115,19 +115,34 @@ const AppointmentsTab = () => {
       <div className="space-y-3 max-h-[60vh] overflow-y-auto">
         {filtered.map(a => (
           <GlassCard key={a.id} animate={false} className="py-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <p className="text-sm font-display tracking-wider">{a.profiles?.full_name || a.profiles?.email || "—"}</p>
-                <p className="text-xs text-muted-foreground">{a.barbers?.name} • {a.services?.name} • {format(new Date(a.appointment_date + "T00:00"), "dd/MM/yyyy")} {a.appointment_time}</p>
-                <p className="text-xs text-muted-foreground">R$ {Number(a.services?.price || 0).toFixed(2)} • {a.status}</p>
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-body font-semibold text-base text-foreground truncate">
+                  {a.profiles?.full_name || a.profiles?.email || "—"}
+                </p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {a.services?.name || "—"}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+                  <span>{format(new Date(a.appointment_date + "T00:00"), "dd/MM/yyyy")} • {a.appointment_time}</span>
+                  <span>{a.barbers?.name}</span>
+                  <span className="text-primary font-semibold">R$ {Number(a.services?.price || 0).toFixed(2)}</span>
+                  <span className="opacity-70">• {a.status}</span>
+                  {a.payment_method && <span className="opacity-70">• {a.payment_method}</span>}
+                </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {a.status === "confirmed" && (
                   <>
                     <Button size="sm" variant="neon" onClick={() => updateStatus(a.id, "completed")}>Concluir</Button>
                     <Button size="sm" variant="destructive" onClick={() => updateStatus(a.id, "cancelled")}>Cancelar</Button>
                   </>
                 )}
+                <ConfirmDeleteButton
+                  onConfirm={() => deleteAppt(a.id, a.google_event_id)}
+                  title="Excluir agendamento?"
+                  description="O evento também será removido do Google Calendar (se sincronizado). Esta ação não pode ser desfeita."
+                />
               </div>
             </div>
           </GlassCard>
