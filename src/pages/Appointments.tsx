@@ -95,7 +95,7 @@ const Appointments = () => {
       <AppHeader />
       
       <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <h1 className="font-display text-2xl text-center tracking-wider text-neon mb-8">MEUS AGENDAMENTOS</h1>
+        <h1 className="font-display text-4xl text-center tracking-wider text-neon mb-8">MEUS AGENDAMENTOS</h1>
 
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <Input placeholder="Buscar barbeiro ou serviço..." value={filter} onChange={e => setFilter(e.target.value)} className="flex-1" />
@@ -122,25 +122,46 @@ const Appointments = () => {
         ) : (
           <div className="space-y-4">
             {filtered.map(a => (
-              <GlassCard key={a.id} animate={false} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-display text-sm tracking-wider">{a.barbers?.name || "—"}</span>
-                    <span className={cn("px-2 py-0.5 rounded text-[10px] font-display", statusColors[a.status])}>
-                      {statusLabels[a.status] || a.status}
-                    </span>
+              <GlassCard key={a.id} animate={false} className="flex flex-col gap-3">
+                {/* Cliente / status */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body font-semibold text-base text-foreground">
+                      {a.services?.name || "Serviço"}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      Com {a.barbers?.name || "—"}
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">{a.services?.name || "—"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {format(new Date(a.appointment_date + "T00:00"), "dd/MM/yyyy")} às {a.appointment_time}
-                    {a.services?.price && <span className="ml-2">• R$ {Number(a.services.price).toFixed(2)}</span>}
+                  <span className={cn("px-2 py-1 rounded-md text-[11px] font-body font-medium shrink-0", statusColors[a.status])}>
+                    {statusLabels[a.status] || a.status}
+                  </span>
+                </div>
+
+                {/* Footer: horário + preço alinhado à direita */}
+                <div className="flex items-end justify-between gap-3 pt-2 border-t border-border/40">
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(a.appointment_date + "T00:00"), "dd/MM/yyyy")} • {a.appointment_time}
+                    {a.payment_method && <span className="ml-2 opacity-70">· {a.payment_method}</span>}
+                  </p>
+                  <p className="text-base font-body font-semibold text-primary">
+                    R$ {Number(a.services?.price || 0).toFixed(2)}
                   </p>
                 </div>
-                {a.status === "confirmed" && new Date(a.appointment_date) >= new Date(new Date().toDateString()) && (
-                  <Button variant="destructive" size="sm" onClick={() => handleCancel(a.id)}>
-                    Cancelar
-                  </Button>
-                )}
+
+                {/* Ações */}
+                <div className="flex items-center justify-end gap-2">
+                  {a.status === "confirmed" && new Date(a.appointment_date) >= new Date(new Date().toDateString()) && (
+                    <Button variant="destructive" size="sm" onClick={() => handleCancel(a.id)}>
+                      Cancelar
+                    </Button>
+                  )}
+                  <ConfirmDeleteButton
+                    onConfirm={() => handleDelete(a.id)}
+                    title="Excluir este agendamento?"
+                    description="O evento também será removido do Google Calendar (se sincronizado). Esta ação não pode ser desfeita."
+                  />
+                </div>
               </GlassCard>
             ))}
           </div>
