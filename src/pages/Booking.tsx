@@ -3,13 +3,13 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
-import ThemeToggle from "@/components/ThemeToggle";
+
 import GlassCard from "@/components/GlassCard";
 import StepperBar from "@/components/StepperBar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { Scissors, Clock, DollarSign } from "lucide-react";
+import { Scissors, Clock, DollarSign, MapPin, Banknote, CreditCard as CreditCardIcon, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format, isBefore, startOfDay, isToday } from "date-fns";
@@ -24,7 +24,7 @@ interface Service {
   id: string; name: string; description: string | null; duration_minutes: number; price: number; category: string | null;
 }
 interface Settings {
-  opening_time: string; closing_time: string; appointment_interval: number;
+  opening_time: string; closing_time: string; appointment_interval: number; barber_address?: string | null;
 }
 interface Schedule {
   day_of_week: number; start_time: string; end_time: string; is_active: boolean;
@@ -45,7 +45,7 @@ const Booking = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("local");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -53,7 +53,7 @@ const Booking = () => {
       const [b, s, set] = await Promise.all([
         supabase.from("barbers").select("id,name,photo_url,specialties").eq("is_active", true),
         supabase.from("services").select("id,name,description,duration_minutes,price,category").eq("is_active", true),
-        supabase.from("settings").select("opening_time,closing_time,appointment_interval").limit(1).single(),
+        supabase.from("settings").select("opening_time,closing_time,appointment_interval,barber_address").limit(1).single(),
       ]);
       if (b.data) setBarbers(b.data);
       if (s.data) setServices(s.data);
@@ -148,8 +148,8 @@ const Booking = () => {
       service_id: selectedService,
       appointment_date: dateStr,
       appointment_time: selectedTime,
-      status: paymentMethod === "local" ? "confirmed" : "pending_payment",
-      payment_status: paymentMethod === "local" ? "waived" : "pending",
+      status: paymentMethod === "cash" ? "confirmed" : "pending_payment",
+      payment_status: paymentMethod === "cash" ? "waived" : "pending",
       payment_method: paymentMethod,
       notes: notes || null,
     }).select("id").single();
@@ -189,7 +189,7 @@ const Booking = () => {
     }
 
     // If online payment, create Mercado Pago preference
-    if (paymentMethod !== "local") {
+    if (paymentMethod !== "cash") {
       try {
         const { data: mpData } = await supabase.functions.invoke("create-payment", {
           body: {
@@ -228,7 +228,7 @@ const Booking = () => {
   return (
     <div className="min-h-screen">
       <AppHeader />
-      <ThemeToggle />
+      
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         <h1 className="font-display text-2xl text-center tracking-wider text-neon mb-6">AGENDAR</h1>
         <StepperBar steps={STEPS} currentStep={step} />
@@ -351,24 +351,41 @@ const Booking = () => {
               </div>
               <div>
                 <label className="text-muted-foreground text-xs block mb-2">Forma de pagamento</label>
-                <div className="flex gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   {[
-                    { id: "local", label: "No local" },
-                    { id: "pix", label: "PIX" },
-                    { id: "card", label: "Cartão" },
+                    { id: "pix", label: "Pix", Icon: QrCode },
+                    { id: "card", label: "Cartão", Icon: CreditCardIcon },
+                    { id: "cash", label: "Dinheiro", Icon: Banknote },
                   ].map(pm => (
                     <button key={pm.id} onClick={() => setPaymentMethod(pm.id)}
                       className={cn(
-                        "px-4 py-2 rounded-lg text-xs font-display border transition-all",
+                        "px-3 py-3 rounded-lg text-sm font-body font-medium border transition-all flex flex-col items-center gap-1",
                         paymentMethod === pm.id
                           ? "border-primary bg-primary/10 text-primary"
                           : "border-muted text-muted-foreground hover:border-primary"
                       )}>
+                      <pm.Icon className="h-5 w-5" />
                       {pm.label}
                     </button>
                   ))}
                 </div>
+                {paymentMethod === "cash" && (
+                  <p className="text-xs text-muted-foreground mt-2">Pagamento será feito no local, em dinheiro.</p>
+                )}
               </div>
+              {settings?.barber_address && (
+                <div className="pt-2">
+                  <a
+                    href={`https://www.google.com/maps/search/?q=${encodeURIComponent(settings.barber_address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-body"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Como chegar
+                  </a>
+                </div>
+              )}
             </div>
             <div className="flex justify-between">
               <Button variant="ghost" onClick={() => setStep(3)}>Voltar</Button>

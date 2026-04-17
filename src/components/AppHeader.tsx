@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Scissors, LogOut, Shield, Calendar } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const AppHeader = () => {
   const { user, isAdmin, profile, signOut } = useAuth();
@@ -17,12 +18,12 @@ const AppHeader = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2 group">
           <Scissors className="h-7 w-7 text-primary animate-glow-pulse" />
-          <span className="font-display text-xl tracking-widest text-neon">
+          <span className="font-display text-2xl tracking-wider text-neon">
             AUTOBARBER
           </span>
         </Link>
 
-        <nav className="flex items-center gap-3">
+        <nav className="flex items-center gap-1 sm:gap-2">
           {user ? (
             <>
               <Button variant="ghost" size="sm" asChild>
@@ -39,19 +40,23 @@ const AppHeader = () => {
                   </Link>
                 </Button>
               )}
-              <div className="flex items-center gap-2 ml-2">
-                <span className="text-sm text-muted-foreground hidden sm:inline">
+              <ThemeToggle />
+              <div className="flex items-center gap-1 ml-1">
+                <span className="text-sm text-muted-foreground hidden md:inline">
                   {profile?.full_name || user.email}
                 </span>
-                <Button variant="ghost" size="icon" onClick={handleSignOut}>
+                <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="Sair">
                   <LogOut className="h-4 w-4" />
                 </Button>
               </div>
             </>
           ) : (
-            <Button variant="neon" size="sm" asChild>
-              <Link to="/auth">Entrar</Link>
-            </Button>
+            <>
+              <ThemeToggle />
+              <Button variant="neon" size="sm" asChild>
+                <Link to="/auth">Entrar</Link>
+              </Button>
+            </>
           )}
         </nav>
       </div>

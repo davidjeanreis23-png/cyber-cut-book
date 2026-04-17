@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
-import ThemeToggle from "@/components/ThemeToggle";
+
 import GlassCard from "@/components/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { BarChart3, Calendar, Users, Scissors, Award, Settings, CreditCard, Bell } from "lucide-react";
+import { BarChart3, Calendar, Users, Scissors, Award, Settings, CreditCard, Bell, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import ConfirmDeleteButton from "@/components/ConfirmDeleteButton";
 
 // ─── Stats Tab ───
 const StatsTab = () => {
@@ -80,6 +81,22 @@ const AppointmentsTab = () => {
     fetchAppts();
   };
 
+  const deleteAppt = async (id: string, googleEventId: string | null) => {
+    // Tenta remover do Google Calendar primeiro (best effort)
+    if (googleEventId) {
+      try {
+        await supabase.functions.invoke("sync-google-calendar", {
+          body: { appointment_id: id, action: "delete" },
+        });
+      } catch (e) {
+        console.error("Erro ao remover do Google Calendar:", e);
+      }
+    }
+    const { error } = await supabase.from("appointments").delete().eq("id", id);
+    if (error) toast.error("Erro ao excluir agendamento");
+    else { toast.success("Agendamento excluído"); fetchAppts(); }
+  };
+
   const filtered = appts.filter(a => statusF === "all" || a.status === statusF);
 
   return (
@@ -98,19 +115,34 @@ const AppointmentsTab = () => {
       <div className="space-y-3 max-h-[60vh] overflow-y-auto">
         {filtered.map(a => (
           <GlassCard key={a.id} animate={false} className="py-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <p className="text-sm font-display tracking-wider">{a.profiles?.full_name || a.profiles?.email || "—"}</p>
-                <p className="text-xs text-muted-foreground">{a.barbers?.name} • {a.services?.name} • {format(new Date(a.appointment_date + "T00:00"), "dd/MM/yyyy")} {a.appointment_time}</p>
-                <p className="text-xs text-muted-foreground">R$ {Number(a.services?.price || 0).toFixed(2)} • {a.status}</p>
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-body font-semibold text-base text-foreground truncate">
+                  {a.profiles?.full_name || a.profiles?.email || "—"}
+                </p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {a.services?.name || "—"}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+                  <span>{format(new Date(a.appointment_date + "T00:00"), "dd/MM/yyyy")} • {a.appointment_time}</span>
+                  <span>{a.barbers?.name}</span>
+                  <span className="text-primary font-semibold">R$ {Number(a.services?.price || 0).toFixed(2)}</span>
+                  <span className="opacity-70">• {a.status}</span>
+                  {a.payment_method && <span className="opacity-70">• {a.payment_method}</span>}
+                </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {a.status === "confirmed" && (
                   <>
                     <Button size="sm" variant="neon" onClick={() => updateStatus(a.id, "completed")}>Concluir</Button>
                     <Button size="sm" variant="destructive" onClick={() => updateStatus(a.id, "cancelled")}>Cancelar</Button>
                   </>
                 )}
+                <ConfirmDeleteButton
+                  onConfirm={() => deleteAppt(a.id, a.google_event_id)}
+                  title="Excluir agendamento?"
+                  description="O evento também será removido do Google Calendar (se sincronizado). Esta ação não pode ser desfeita."
+                />
               </div>
             </div>
           </GlassCard>
@@ -158,6 +190,12 @@ const BarbersTab = () => {
     fetch();
   };
 
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("barbers").delete().eq("id", id);
+    if (error) toast.error("Erro ao excluir. Pode existir agendamento vinculado.");
+    else { toast.success("Barbeiro excluído"); fetch(); }
+  };
+
   return (
     <div className="space-y-6">
       <GlassCard animate={false}>
@@ -177,13 +215,18 @@ const BarbersTab = () => {
       <div className="space-y-3">
         {barbers.map(b => (
           <GlassCard key={b.id} animate={false} className="flex items-center justify-between py-3">
-            <div>
-              <p className="font-display text-sm tracking-wider">{b.name}</p>
-              <p className="text-xs text-muted-foreground">{b.specialties?.join(", ") || "—"}</p>
+            <div className="flex-1 min-w-0">
+              <p className="font-body font-semibold text-base">{b.name}</p>
+              <p className="text-sm text-muted-foreground">{b.specialties?.join(", ") || "—"}</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
               <Switch checked={b.is_active} onCheckedChange={() => toggleActive(b.id, b.is_active)} />
               <Button variant="ghost" size="sm" onClick={() => edit(b)}>Editar</Button>
+              <ConfirmDeleteButton
+                onConfirm={() => remove(b.id)}
+                title={`Excluir ${b.name}?`}
+                description="Esta ação não pode ser desfeita."
+              />
             </div>
           </GlassCard>
         ))}
@@ -231,6 +274,12 @@ const ServicesTab = () => {
     fetch();
   };
 
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("services").delete().eq("id", id);
+    if (error) toast.error("Erro ao excluir. Pode existir agendamento vinculado.");
+    else { toast.success("Serviço excluído"); fetch(); }
+  };
+
   return (
     <div className="space-y-6">
       <GlassCard animate={false}>
@@ -251,13 +300,18 @@ const ServicesTab = () => {
       <div className="space-y-3">
         {services.map(s => (
           <GlassCard key={s.id} animate={false} className="flex items-center justify-between py-3">
-            <div>
-              <p className="font-display text-sm tracking-wider">{s.name}</p>
-              <p className="text-xs text-muted-foreground">{s.duration_minutes}min • R$ {Number(s.price).toFixed(2)} {s.category && `• ${s.category}`}</p>
+            <div className="flex-1 min-w-0">
+              <p className="font-body font-semibold text-base">{s.name}</p>
+              <p className="text-sm text-muted-foreground">{s.duration_minutes}min • R$ {Number(s.price).toFixed(2)} {s.category && `• ${s.category}`}</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
               <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s.id, s.is_active)} />
               <Button variant="ghost" size="sm" onClick={() => edit(s)}>Editar</Button>
+              <ConfirmDeleteButton
+                onConfirm={() => remove(s.id)}
+                title={`Excluir ${s.name}?`}
+                description="Esta ação não pode ser desfeita."
+              />
             </div>
           </GlassCard>
         ))}
@@ -340,24 +394,30 @@ const Admin = () => {
   return (
     <div className="min-h-screen">
       <AppHeader />
-      <ThemeToggle />
+      
       <main className="container mx-auto px-4 py-8 max-w-5xl">
-        <h1 className="font-display text-2xl text-center tracking-wider text-neon mb-8">PAINEL ADMIN</h1>
+        <h1 className="font-display text-4xl text-center tracking-wider text-neon mb-8">PAINEL ADMIN</h1>
 
         <Tabs defaultValue="stats" className="w-full">
-          <TabsList className="w-full flex flex-wrap gap-1 h-auto bg-card border border-neon p-1 mb-6">
-            {[
-              { v: "stats", icon: BarChart3, label: "Estatísticas" },
-              { v: "appointments", icon: Calendar, label: "Agendamentos" },
-              { v: "barbers", icon: Scissors, label: "Barbeiros" },
-              { v: "services", icon: Users, label: "Serviços" },
-              { v: "settings", icon: Settings, label: "Configurações" },
-            ].map(t => (
-              <TabsTrigger key={t.v} value={t.v} className="flex items-center gap-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <t.icon className="h-3.5 w-3.5" />{t.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="tabs-scroll mb-6 -mx-2 px-2">
+            <TabsList className="inline-flex w-max gap-2 h-auto bg-card border border-neon p-1.5 rounded-full">
+              {[
+                { v: "stats", icon: BarChart3, label: "Estatísticas" },
+                { v: "appointments", icon: Calendar, label: "Agendamentos" },
+                { v: "barbers", icon: Scissors, label: "Barbeiros" },
+                { v: "services", icon: Users, label: "Serviços" },
+                { v: "settings", icon: Settings, label: "Configurações" },
+              ].map(t => (
+                <TabsTrigger
+                  key={t.v}
+                  value={t.v}
+                  className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-full whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <t.icon className="h-4 w-4" />{t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           <TabsContent value="stats"><StatsTab /></TabsContent>
           <TabsContent value="appointments"><AppointmentsTab /></TabsContent>

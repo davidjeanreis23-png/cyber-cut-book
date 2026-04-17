@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
-import ThemeToggle from "@/components/ThemeToggle";
+
 import GlassCard from "@/components/GlassCard";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ const Loyalty = () => {
   return (
     <div className="min-h-screen">
       <AppHeader />
-      <ThemeToggle />
+      
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         <h1 className="font-display text-2xl text-center tracking-wider text-neon mb-8">FIDELIDADE</h1>
 
