@@ -45,7 +45,7 @@ const Booking = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("local");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -148,8 +148,8 @@ const Booking = () => {
       service_id: selectedService,
       appointment_date: dateStr,
       appointment_time: selectedTime,
-      status: paymentMethod === "local" ? "confirmed" : "pending_payment",
-      payment_status: paymentMethod === "local" ? "waived" : "pending",
+      status: paymentMethod === "cash" ? "confirmed" : "pending_payment",
+      payment_status: paymentMethod === "cash" ? "waived" : "pending",
       payment_method: paymentMethod,
       notes: notes || null,
     }).select("id").single();
@@ -189,7 +189,7 @@ const Booking = () => {
     }
 
     // If online payment, create Mercado Pago preference
-    if (paymentMethod !== "local") {
+    if (paymentMethod !== "cash") {
       try {
         const { data: mpData } = await supabase.functions.invoke("create-payment", {
           body: {
@@ -351,24 +351,41 @@ const Booking = () => {
               </div>
               <div>
                 <label className="text-muted-foreground text-xs block mb-2">Forma de pagamento</label>
-                <div className="flex gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   {[
-                    { id: "local", label: "No local" },
-                    { id: "pix", label: "PIX" },
-                    { id: "card", label: "Cartão" },
+                    { id: "pix", label: "Pix", Icon: QrCode },
+                    { id: "card", label: "Cartão", Icon: CreditCardIcon },
+                    { id: "cash", label: "Dinheiro", Icon: Banknote },
                   ].map(pm => (
                     <button key={pm.id} onClick={() => setPaymentMethod(pm.id)}
                       className={cn(
-                        "px-4 py-2 rounded-lg text-xs font-display border transition-all",
+                        "px-3 py-3 rounded-lg text-sm font-body font-medium border transition-all flex flex-col items-center gap-1",
                         paymentMethod === pm.id
                           ? "border-primary bg-primary/10 text-primary"
                           : "border-muted text-muted-foreground hover:border-primary"
                       )}>
+                      <pm.Icon className="h-5 w-5" />
                       {pm.label}
                     </button>
                   ))}
                 </div>
+                {paymentMethod === "cash" && (
+                  <p className="text-xs text-muted-foreground mt-2">Pagamento será feito no local, em dinheiro.</p>
+                )}
               </div>
+              {settings?.barber_address && (
+                <div className="pt-2">
+                  <a
+                    href={`https://www.google.com/maps/search/?q=${encodeURIComponent(settings.barber_address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-body"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Como chegar
+                  </a>
+                </div>
+              )}
             </div>
             <div className="flex justify-between">
               <Button variant="ghost" onClick={() => setStep(3)}>Voltar</Button>
