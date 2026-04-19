@@ -42,7 +42,8 @@ const BarberPhotoUpload = ({ value, onChange }: BarberPhotoUploadProps) => {
     });
 
     if (error) {
-      toast.error("Erro ao enviar imagem");
+      console.error("[BarberPhotoUpload] upload error:", error);
+      toast.error(`Erro ao enviar imagem: ${error.message}`);
       setUploading(false);
       setPreview(value);
       return;
