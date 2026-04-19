@@ -275,20 +275,26 @@ export type Database = {
       }
       loyalty_points: {
         Row: {
+          cuts_count: number
           id: string
           points: number
+          reward_available: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
+          cuts_count?: number
           id?: string
           points?: number
+          reward_available?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
+          cuts_count?: number
           id?: string
           points?: number
+          reward_available?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -355,6 +361,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
