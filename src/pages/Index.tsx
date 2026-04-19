@@ -58,6 +58,9 @@ const Index = () => {
               </Button>
             )}
           </div>
+          <div className="flex justify-center mt-4 animate-slide-up" style={{ animationDelay: "0.5s" }}>
+            <MapButton variant="neon-outline" size="lg" label="Ver no mapa" className="text-base px-6 py-5" />
+          </div>
         </div>
       </section>
 
@@ -117,9 +120,6 @@ const Index = () => {
         <div className="container mx-auto text-center text-muted-foreground text-sm">
           <p className="font-display tracking-wider mb-2">AUTOBARBER</p>
           <p>Horário: 08:00 – 20:00 • Segunda a Sábado</p>
-          <div className="mt-3 flex justify-center">
-            <MapButton />
-          </div>
           <p className="mt-3">© {new Date().getFullYear()} AutoBarber. Todos os direitos reservados.</p>
         </div>
       </footer>

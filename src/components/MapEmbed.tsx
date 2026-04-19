@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import MapButton from "@/components/MapButton";
 
 interface MapEmbedProps {
   address?: string | null;
@@ -65,10 +64,6 @@ const MapEmbed = ({
             referrerPolicy="no-referrer-when-downgrade"
             allowFullScreen
           />
-        </div>
-
-        <div className="flex justify-center mt-5">
-          <MapButton address={resolved} variant="neon" size="lg" label="Abrir no Google Maps" />
         </div>
       </div>
     </section>
