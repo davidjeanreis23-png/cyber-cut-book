@@ -20,6 +20,7 @@ import ReportsTab from "@/components/admin/ReportsTab";
 import ClientsTab from "@/components/admin/ClientsTab";
 import AdminSidebar, { AdminSection } from "@/components/admin/AdminSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import BarberPhotoUpload from "@/components/BarberPhotoUpload";
 
 
 // ─── Stats Tab ───
@@ -205,10 +206,10 @@ const BarbersTab = () => {
       <GlassCard animate={false}>
         <h3 className="font-display text-sm tracking-wider mb-3">{editing ? "EDITAR" : "NOVO"} BARBEIRO</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="col-span-full"><Label className="mb-2 block">Foto</Label><BarberPhotoUpload value={photoUrl || null} onChange={(url) => setPhotoUrl(url || "")} /></div>
           <div><Label>Nome</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
-          <div><Label>Foto (URL)</Label><Input value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} /></div>
           <div><Label>Especialidades (separar por vírgula)</Label><Input value={specialties} onChange={e => setSpecialties(e.target.value)} /></div>
-          <div><Label>Bio</Label><Textarea value={bio} onChange={e => setBio(e.target.value)} /></div>
+          <div className="col-span-full"><Label>Bio</Label><Textarea value={bio} onChange={e => setBio(e.target.value)} /></div>
         </div>
         <div className="flex gap-2 mt-3">
           <Button variant="neon" onClick={save} disabled={!name}>Salvar</Button>
@@ -218,10 +219,19 @@ const BarbersTab = () => {
 
       <div className="space-y-3">
         {barbers.map(b => (
-          <GlassCard key={b.id} animate={false} className="flex items-center justify-between py-3">
-            <div className="flex-1 min-w-0">
-              <p className="font-body font-semibold text-base">{b.name}</p>
-              <p className="text-sm text-muted-foreground">{b.specialties?.join(", ") || "—"}</p>
+          <GlassCard key={b.id} animate={false} className="flex items-center justify-between py-3 gap-3">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              {b.photo_url ? (
+                <img src={b.photo_url} alt={b.name} className="w-12 h-12 rounded-full object-cover border border-primary/40 shrink-0" />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center border border-primary/40 shrink-0">
+                  <span className="text-sm text-muted-foreground">{b.name?.charAt(0)}</span>
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="font-body font-semibold text-base truncate">{b.name}</p>
+                <p className="text-sm text-muted-foreground truncate">{b.specialties?.join(", ") || "—"}</p>
+              </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Switch checked={b.is_active} onCheckedChange={() => toggleActive(b.id, b.is_active)} />
