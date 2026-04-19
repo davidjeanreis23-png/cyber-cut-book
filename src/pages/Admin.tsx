@@ -385,9 +385,31 @@ const SettingsTab = () => {
 };
 
 // ─── Main Admin ───
+const SECTION_TITLES: Record<AdminSection, string> = {
+  stats: "Dashboard",
+  appointments: "Agendamentos",
+  barbers: "Barbeiros",
+  services: "Serviços",
+  clients: "Clientes",
+  financial: "Financeiro",
+  reports: "Relatórios",
+  loyalty: "Fidelidade",
+  notifications: "Notificações",
+  settings: "Configurações",
+};
+
+const PlaceholderTab = ({ icon: Icon, title }: { icon: any; title: string }) => (
+  <GlassCard animate={false} className="text-center py-12">
+    <Icon className="h-10 w-10 text-primary mx-auto mb-3" />
+    <h3 className="font-display text-xl text-neon mb-1">{title}</h3>
+    <p className="text-sm text-muted-foreground">Em breve neste painel.</p>
+  </GlassCard>
+);
+
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
   const navigate = useNavigate();
+  const [section, setSection] = useState<AdminSection>("stats");
 
   useEffect(() => {
     if (!loading && !isAdmin) navigate("/");
@@ -395,48 +417,41 @@ const Admin = () => {
 
   if (loading) return null;
 
-  return (
-    <div className="min-h-screen">
-      <AppHeader />
-      
-      <main className="container mx-auto px-4 py-8 max-w-5xl">
-        <h1 className="font-display text-4xl text-center tracking-wider text-neon mb-8">PAINEL ADMIN</h1>
+  const renderSection = () => {
+    switch (section) {
+      case "stats": return <StatsTab />;
+      case "appointments": return <AppointmentsTab />;
+      case "financial": return <FinancialTab />;
+      case "reports": return <ReportsTab />;
+      case "clients": return <ClientsTab />;
+      case "barbers": return <BarbersTab />;
+      case "services": return <ServicesTab />;
+      case "settings": return <SettingsTab />;
+      case "loyalty": return <PlaceholderTab icon={Bell} title="Fidelidade" />;
+      case "notifications": return <PlaceholderTab icon={Bell} title="Notificações" />;
+    }
+  };
 
-        <Tabs defaultValue="stats" className="w-full">
-          <div className="tabs-scroll mb-6 -mx-2 px-2">
-            <TabsList className="inline-flex w-max gap-2 h-auto bg-card border border-neon p-1.5 rounded-full">
-              {[
-                { v: "stats", icon: BarChart3, label: "Estatísticas" },
-                { v: "appointments", icon: Calendar, label: "Agendamentos" },
-                { v: "financial", icon: DollarSign, label: "Financeiro" },
-                { v: "reports", icon: FileBarChart, label: "Relatórios" },
-                { v: "clients", icon: UserCircle, label: "Clientes" },
-                { v: "barbers", icon: Scissors, label: "Barbeiros" },
-                { v: "services", icon: Users, label: "Serviços" },
-                { v: "settings", icon: Settings, label: "Configurações" },
-              ].map(t => (
-                <TabsTrigger
-                  key={t.v}
-                  value={t.v}
-                  className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-full whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                >
-                  <t.icon className="h-4 w-4" />{t.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AdminSidebar active={section} onChange={setSection} />
+
+        <div className="flex-1 flex flex-col min-w-0">
+          <AppHeader />
+          <div className="h-12 flex items-center gap-3 border-b border-primary/20 px-4 sticky top-16 z-30 bg-background/80 backdrop-blur">
+            <SidebarTrigger />
+            <h1 className="font-display text-sm tracking-widest text-neon uppercase">
+              {SECTION_TITLES[section]}
+            </h1>
           </div>
 
-          <TabsContent value="stats"><StatsTab /></TabsContent>
-          <TabsContent value="appointments"><AppointmentsTab /></TabsContent>
-          <TabsContent value="financial"><FinancialTab /></TabsContent>
-          <TabsContent value="reports"><ReportsTab /></TabsContent>
-          <TabsContent value="clients"><ClientsTab /></TabsContent>
-          <TabsContent value="barbers"><BarbersTab /></TabsContent>
-          <TabsContent value="services"><ServicesTab /></TabsContent>
-          <TabsContent value="settings"><SettingsTab /></TabsContent>
-        </Tabs>
-      </main>
-    </div>
+          <main className="flex-1 px-4 py-6 md:px-8 md:py-8 max-w-6xl w-full mx-auto">
+            {renderSection()}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
