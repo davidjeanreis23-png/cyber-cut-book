@@ -10,7 +10,7 @@ interface BarberPhotoUploadProps {
   onChange: (url: string | null) => void;
 }
 
-const MAX_BYTES = 3 * 1024 * 1024; // 3MB
+const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 
 const BarberPhotoUpload = ({ value, onChange }: BarberPhotoUploadProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
