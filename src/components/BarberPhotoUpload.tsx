@@ -23,7 +23,7 @@ const BarberPhotoUpload = ({ value, onChange }: BarberPhotoUploadProps) => {
       return;
     }
     if (file.size > MAX_BYTES) {
-      toast.error("Imagem muito grande (máx 3MB)");
+      toast.error("Imagem muito grande (máx 5MB)");
       return;
     }
 
@@ -106,7 +106,7 @@ const BarberPhotoUpload = ({ value, onChange }: BarberPhotoUploadProps) => {
             </Button>
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground">JPG/PNG até 3MB</p>
+        <p className="text-[11px] text-muted-foreground">JPG/PNG até 5MB</p>
       </div>
     </div>
   );
