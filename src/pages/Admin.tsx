@@ -11,15 +11,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { BarChart3, Calendar, Users, Scissors, Award, Settings, CreditCard, Bell, MapPin, DollarSign, FileBarChart, UserCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { BarChart3, Calendar, Users, Bell } from "lucide-react";
 import { format } from "date-fns";
 import ConfirmDeleteButton from "@/components/ConfirmDeleteButton";
 import FinancialTab from "@/components/admin/FinancialTab";
 import ReportsTab from "@/components/admin/ReportsTab";
 import ClientsTab from "@/components/admin/ClientsTab";
+import AdminSidebar, { AdminSection } from "@/components/admin/AdminSidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { useState as useStateReact } from "react";
 
 // ─── Stats Tab ───
 const StatsTab = () => {
