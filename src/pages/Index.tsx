@@ -6,6 +6,7 @@ import AppHeader from "@/components/AppHeader";
 import FloatingParticles from "@/components/FloatingParticles";
 import GlassCard from "@/components/GlassCard";
 import MapButton from "@/components/MapButton";
+import MapEmbed from "@/components/MapEmbed";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,6 +108,9 @@ const Index = () => {
           </div>
         </section>
       )}
+
+      {/* Localização */}
+      <MapEmbed />
 
       {/* Footer */}
       <footer className="border-t border-neon py-8 px-4">
