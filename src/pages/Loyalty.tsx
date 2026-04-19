@@ -5,8 +5,9 @@ import AppHeader from "@/components/AppHeader";
 
 import GlassCard from "@/components/GlassCard";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Award, TrendingUp, TrendingDown } from "lucide-react";
+import { Award, TrendingUp, TrendingDown, Scissors, Gift } from "lucide-react";
 
 interface Reward { id: string; name: string; description: string | null; points_needed: number; }
 interface Transaction { id: string; points: number; description: string; created_at: string; }
@@ -14,17 +15,23 @@ interface Transaction { id: string; points: number; description: string; created
 const Loyalty = () => {
   const { user } = useAuth();
   const [points, setPoints] = useState(0);
+  const [cutsCount, setCutsCount] = useState(0);
+  const [rewardAvailable, setRewardAvailable] = useState(false);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const fetchData = async () => {
     if (!user) return;
     const [p, r, t] = await Promise.all([
-      supabase.from("loyalty_points").select("points").eq("user_id", user.id).single(),
+      supabase.from("loyalty_points").select("points,cuts_count,reward_available").eq("user_id", user.id).maybeSingle(),
       supabase.from("loyalty_rewards").select("*").eq("is_active", true).order("points_needed"),
       supabase.from("loyalty_transactions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
     ]);
-    if (p.data) setPoints(p.data.points);
+    if (p.data) {
+      setPoints(p.data.points);
+      setCutsCount(p.data.cuts_count || 0);
+      setRewardAvailable(!!p.data.reward_available);
+    }
     if (r.data) setRewards(r.data);
     if (t.data) setTransactions(t.data);
   };
@@ -33,9 +40,11 @@ const Loyalty = () => {
 
   const handleRedeem = async (reward: Reward) => {
     if (points < reward.points_needed) { toast.error("Pontos insuficientes"); return; }
-    // Debit points (admin-only table, so this needs an edge function in production)
     toast.info("Solicitação de resgate enviada ao administrador!");
   };
+
+  const remaining = Math.max(0, 10 - cutsCount);
+  const progressPct = Math.min(100, (cutsCount / 10) * 100);
 
   return (
     <div className="min-h-screen">
@@ -44,8 +53,38 @@ const Loyalty = () => {
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         <h1 className="font-display text-2xl text-center tracking-wider text-neon mb-8">FIDELIDADE</h1>
 
+        {/* Cuts progress card */}
+        <GlassCard className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Scissors className="h-5 w-5 text-primary" />
+              <h2 className="font-display text-sm tracking-wider">PROGRAMA 10 CORTES</h2>
+            </div>
+            <span className="font-display text-lg text-neon">{cutsCount}/10</span>
+          </div>
+
+          <Progress value={progressPct} className="h-3 mb-3" />
+
+          {rewardAvailable ? (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/40">
+              <Gift className="h-6 w-6 text-primary animate-glow-pulse shrink-0" />
+              <div>
+                <p className="font-display text-sm text-neon">CORTE GRÁTIS DISPONÍVEL!</p>
+                <p className="text-xs text-muted-foreground">Apresente esta tela ao barbeiro no próximo agendamento.</p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center">
+              {remaining === 10
+                ? "Comece sua jornada — a cada 10 cortes, ganhe 1 grátis 🎉"
+                : `Faltam ${remaining} ${remaining === 1 ? "corte" : "cortes"} para ganhar 1 corte grátis`}
+            </p>
+          )}
+        </GlassCard>
+
+        {/* Points card */}
         <GlassCard className="text-center mb-8">
-          <Award className="h-12 w-12 text-primary mx-auto mb-3" />
+          <Award className="h-10 w-10 text-primary mx-auto mb-2" />
           <p className="font-display text-3xl text-neon">{points}</p>
           <p className="text-sm text-muted-foreground">pontos acumulados</p>
         </GlassCard>

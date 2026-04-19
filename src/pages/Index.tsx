@@ -5,6 +5,7 @@ import { Scissors, Calendar, CreditCard, Users } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import FloatingParticles from "@/components/FloatingParticles";
 import GlassCard from "@/components/GlassCard";
+import MapButton from "@/components/MapButton";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -112,7 +113,10 @@ const Index = () => {
         <div className="container mx-auto text-center text-muted-foreground text-sm">
           <p className="font-display tracking-wider mb-2">AUTOBARBER</p>
           <p>Horário: 08:00 – 20:00 • Segunda a Sábado</p>
-          <p className="mt-1">© {new Date().getFullYear()} AutoBarber. Todos os direitos reservados.</p>
+          <div className="mt-3 flex justify-center">
+            <MapButton />
+          </div>
+          <p className="mt-3">© {new Date().getFullYear()} AutoBarber. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>

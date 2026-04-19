@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Scissors, LogOut, Shield, Calendar } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import NotificationsBell from "@/components/NotificationsBell";
 
 const AppHeader = () => {
   const { user, isAdmin, profile, signOut } = useAuth();
@@ -40,6 +41,7 @@ const AppHeader = () => {
                   </Link>
                 </Button>
               )}
+              <NotificationsBell />
               <ThemeToggle />
               <div className="flex items-center gap-1 ml-1">
                 <span className="text-sm text-muted-foreground hidden md:inline">

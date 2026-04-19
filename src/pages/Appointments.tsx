@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import ConfirmDeleteButton from "@/components/ConfirmDeleteButton";
+import MapButton from "@/components/MapButton";
 
 interface Appointment {
   id: string;
@@ -95,7 +96,11 @@ const Appointments = () => {
       <AppHeader />
       
       <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <h1 className="font-display text-4xl text-center tracking-wider text-neon mb-8">MEUS AGENDAMENTOS</h1>
+        <h1 className="font-display text-4xl text-center tracking-wider text-neon mb-4">MEUS AGENDAMENTOS</h1>
+
+        <div className="flex justify-center mb-6">
+          <MapButton label="Como chegar à barbearia" />
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <Input placeholder="Buscar barbeiro ou serviço..." value={filter} onChange={e => setFilter(e.target.value)} className="flex-1" />
