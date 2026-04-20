@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
+import SEO from "@/components/SEO";
 
 import GlassCard from "@/components/GlassCard";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,7 @@ const Appointments = () => {
 
   return (
     <div className="min-h-screen">
+      <SEO title="Meus agendamentos | AutoBarber" description="Acompanhe e gerencie seus agendamentos confirmados, concluídos e cancelados na AutoBarber." path="/appointments" />
       <AppHeader />
       
       <main className="container mx-auto px-4 py-8 max-w-4xl">

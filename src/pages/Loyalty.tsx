@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
+import SEO from "@/components/SEO";
 
 import GlassCard from "@/components/GlassCard";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ const Loyalty = () => {
 
   return (
     <div className="min-h-screen">
+      <SEO title="Programa de Fidelidade | AutoBarber" description="Acumule pontos a cada agendamento e ganhe cortes grátis. Confira seu cartão fidelidade na AutoBarber." path="/loyalty" />
       <AppHeader />
       
       <main className="container mx-auto px-4 py-8 max-w-3xl">
