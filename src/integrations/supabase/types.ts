@@ -424,6 +424,7 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
+          push_token: string | null
           tenant_id: string | null
           updated_at: string
         }
@@ -434,6 +435,7 @@ export type Database = {
           full_name?: string | null
           id: string
           phone?: string | null
+          push_token?: string | null
           tenant_id?: string | null
           updated_at?: string
         }
@@ -444,6 +446,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          push_token?: string | null
           tenant_id?: string | null
           updated_at?: string
         }
