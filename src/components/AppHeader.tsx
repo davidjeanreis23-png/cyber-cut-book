@@ -1,12 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Scissors, LogOut, Shield, Calendar } from "lucide-react";
+import { Scissors, LogOut, Shield, Calendar, Crown } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationsBell from "@/components/NotificationsBell";
 
 const AppHeader = () => {
-  const { user, isAdmin, profile, signOut } = useAuth();
+  const { user, isAdmin, isMaster, profile, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -38,6 +38,14 @@ const AppHeader = () => {
                   <Link to="/admin" className="flex items-center gap-1.5">
                     <Shield className="h-4 w-4" />
                     <span className="hidden sm:inline">Admin</span>
+                  </Link>
+                </Button>
+              )}
+              {isMaster && (
+                <Button variant="neon" size="sm" asChild>
+                  <Link to="/master" className="flex items-center gap-1.5">
+                    <Crown className="h-4 w-4" />
+                    <span className="hidden sm:inline">Master</span>
                   </Link>
                 </Button>
               )}
