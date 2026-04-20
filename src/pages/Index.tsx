@@ -7,6 +7,7 @@ import FloatingParticles from "@/components/FloatingParticles";
 import GlassCard from "@/components/GlassCard";
 import MapButton from "@/components/MapButton";
 import MapEmbed from "@/components/MapEmbed";
+import SEO from "@/components/SEO";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
