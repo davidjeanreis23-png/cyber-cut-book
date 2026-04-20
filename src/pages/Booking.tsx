@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
+import SEO from "@/components/SEO";
 
 import GlassCard from "@/components/GlassCard";
 import StepperBar from "@/components/StepperBar";
@@ -227,6 +228,7 @@ const Booking = () => {
 
   return (
     <div className="min-h-screen">
+      <SEO title="Agendar corte | AutoBarber" description="Escolha barbeiro, serviço, data e horário em poucos cliques. Agendamento online rápido na AutoBarber." path="/booking" />
       <AppHeader />
       
       <main className="container mx-auto px-4 py-8 max-w-3xl">

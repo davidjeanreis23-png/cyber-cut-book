@@ -9,6 +9,7 @@ import { Scissors } from "lucide-react";
 import { toast } from "sonner";
 import GlassCard from "@/components/GlassCard";
 import FloatingParticles from "@/components/FloatingParticles";
+import SEO from "@/components/SEO";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -84,6 +85,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-4">
+      <SEO title={isLogin ? "Entrar | AutoBarber" : "Criar conta | AutoBarber"} description="Acesse sua conta AutoBarber para agendar cortes e acompanhar seu programa de fidelidade." path="/auth" />
       <FloatingParticles />
       <GlassCard className="w-full max-w-md relative z-10">
         <div className="flex flex-col items-center mb-8">
