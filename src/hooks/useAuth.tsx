@@ -8,14 +8,25 @@ interface Profile {
   email: string | null;
   phone: string | null;
   avatar_url: string | null;
+  tenant_id: string | null;
+}
+
+export interface TenantInfo {
+  id: string;
+  name: string;
+  status: "trial" | "active" | "blocked" | "cancelled";
+  trial_end: string;
+  paid_until: string | null;
 }
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  tenant: TenantInfo | null;
   loading: boolean;
   isAdmin: boolean;
+  isMaster: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -27,7 +38,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [tenant, setTenant] = useState<TenantInfo | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMaster, setIsMaster] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
@@ -36,16 +49,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("*")
       .eq("id", userId)
       .single();
-    setProfile(data);
+    setProfile(data as Profile | null);
+    if (data?.tenant_id) {
+      const { data: t } = await supabase
+        .from("tenants")
+        .select("id, name, status, trial_end, paid_until")
+        .eq("id", data.tenant_id)
+        .single();
+      setTenant(t as TenantInfo | null);
+    } else {
+      setTenant(null);
+    }
   };
 
-  const fetchRole = async (userId: string) => {
+  const fetchRoles = async (userId: string) => {
     const { data } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
-      .single();
-    setIsAdmin(data?.role === "admin");
+      .eq("user_id", userId);
+    const roles = (data || []).map((r: any) => r.role);
+    setIsAdmin(roles.includes("admin"));
+    setIsMaster(roles.includes("master"));
   };
 
   useEffect(() => {
@@ -56,11 +80,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (session?.user) {
           setTimeout(() => {
             fetchProfile(session.user.id);
-            fetchRole(session.user.id);
+            fetchRoles(session.user.id);
           }, 0);
         } else {
           setProfile(null);
+          setTenant(null);
           setIsAdmin(false);
+          setIsMaster(false);
         }
         setLoading(false);
       }
@@ -71,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
-        fetchRole(session.user.id);
+        fetchRoles(session.user.id);
       }
       setLoading(false);
     });
@@ -101,7 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, isAdmin, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, profile, tenant, loading, isAdmin, isMaster, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
