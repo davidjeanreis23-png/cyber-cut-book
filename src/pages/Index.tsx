@@ -132,6 +132,7 @@ const Index = () => {
 
       {/* Localização */}
       <MapEmbed />
+      </main>
 
       {/* Footer */}
       <footer className="border-t border-neon py-8 px-4">
