@@ -34,10 +34,27 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
+      <SEO
+        title="AutoBarber — Agendamento online para barbearias"
+        description="Agende seu corte na AutoBarber: barbeiros qualificados, horários em tempo real e pagamento facilitado. O futuro do estilo começa aqui."
+        path="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "HairSalon",
+          name: "AutoBarber",
+          description: "Sistema de agendamento para barbearias",
+          url: "https://cyber-cut-book.lovable.app",
+          image:
+            "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3c4dd637-99f8-4ecf-ace6-29bda94c51be/id-preview-437ad10c--eafe43fb-1114-4fcf-a6f6-0380afebd518.lovable.app-1775869070807.png",
+          priceRange: "$$",
+          openingHours: "Mo-Sa 08:00-20:00",
+        }}
+      />
       <AppHeader />
 
       {/* Hero */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+      <main>
+      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden" aria-label="Hero">
         <FloatingParticles />
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
           <div className="flex justify-center mb-6">
