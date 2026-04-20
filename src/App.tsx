@@ -32,10 +32,18 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+import { useWebPush } from "@/hooks/useWebPush";
+
+const PushBootstrap = () => {
+  useWebPush();
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
+        <PushBootstrap />
         <Toaster />
         <Sonner />
         <BrowserRouter>
