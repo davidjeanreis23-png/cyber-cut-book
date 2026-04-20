@@ -180,6 +180,18 @@ const Booking = () => {
       console.error("Email error:", e);
     }
 
+    // Send Web Push (best-effort)
+    try {
+      await supabase.functions.invoke("send-push", {
+        body: {
+          user_id: user.id,
+          title: "✅ Agendamento confirmado",
+          message: `${selectedServiceData?.name} com ${selectedBarberData?.name} em ${format(selectedDate, "dd/MM/yyyy")} às ${selectedTime}.`,
+          url: "/appointments",
+        },
+      });
+    } catch (e) { console.error("Push error:", e); }
+
     // Sync with Google Calendar
     try {
       await supabase.functions.invoke("sync-google-calendar", {
