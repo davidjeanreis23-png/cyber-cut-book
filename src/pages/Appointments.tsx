@@ -63,12 +63,23 @@ const Appointments = () => {
   const handleCancel = async (id: string) => {
     const { error } = await supabase.from("appointments").update({ status: "cancelled" as any }).eq("id", id);
     if (error) { toast.error("Erro ao cancelar"); return; }
-    // Remove do Google Calendar (best effort)
     try {
       await supabase.functions.invoke("sync-google-calendar", {
         body: { appointment_id: id, action: "delete" },
       });
     } catch (e) { console.error("Calendar sync error:", e); }
+    if (user) {
+      try {
+        await supabase.functions.invoke("send-push", {
+          body: {
+            user_id: user.id,
+            title: "❌ Agendamento cancelado",
+            message: "Seu agendamento foi cancelado com sucesso.",
+            url: "/appointments",
+          },
+        });
+      } catch (e) { console.error("Push error:", e); }
+    }
     toast.success("Agendamento cancelado");
     fetchAppointments();
   };
