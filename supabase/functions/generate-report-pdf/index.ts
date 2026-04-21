@@ -29,84 +29,233 @@ const buildHTML = (p: ReportPayload) => {
 <head>
 <meta charset="UTF-8" />
 <title>Relatório AutoBarber — ${from} a ${to}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
 <style>
-  @page { size: A4; margin: 18mm; }
+  @page { size: A4 portrait; margin: 20mm; }
   * { box-sizing: border-box; }
-  body { font-family: 'DM Sans', -apple-system, sans-serif; color: #1a1a1a; margin: 0; padding: 24px; }
-  h1 { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 36px; letter-spacing: 2px; margin: 0 0 4px; color: #6d28d9; }
-  h2 { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 22px; letter-spacing: 1px; margin: 28px 0 10px; color: #1a1a1a; border-bottom: 2px solid #6d28d9; padding-bottom: 4px; }
-  .header-meta { color: #666; font-size: 12px; margin-bottom: 24px; }
-  .summary { display: flex; gap: 12px; margin: 18px 0; }
-  .summary-card { flex: 1; padding: 14px; border: 1px solid #e5e5e5; border-radius: 8px; }
-  .summary-card .label { font-size: 11px; text-transform: uppercase; color: #666; letter-spacing: 1px; }
-  .summary-card .value { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 24px; margin-top: 4px; }
-  .income { color: #16a34a; }
-  .expense { color: #dc2626; }
-  .profit { color: #6d28d9; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
-  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eaeaea; }
-  th { background: #f5f3ff; font-weight: 600; color: #4c1d95; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+  body { 
+    font-family: 'Inter', sans-serif; 
+    color: #1a1a1a; 
+    margin: 0; 
+    padding: 0; 
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Cabeçalho */
+  .header {
+    background-color: #1a0533;
+    color: #ffffff;
+    padding: 24px;
+    border-bottom: 4px solid #7c3aed;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px 8px 0 0;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-icon {
+    font-size: 32px;
+  }
+  .header h1 { 
+    font-family: 'Orbitron', sans-serif; 
+    font-size: 32px; 
+    margin: 0; 
+    letter-spacing: 2px; 
+  }
+  .header-meta {
+    text-align: right;
+  }
+  .header-meta .subtitle {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    color: #ffffff;
+  }
+  .header-meta .period {
+    color: #d1d5db;
+    font-size: 12px;
+  }
+
+  /* Cards de Resumo */
+  .summary { 
+    display: flex; 
+    gap: 16px; 
+    margin: 24px 0; 
+  }
+  .summary-card { 
+    flex: 1; 
+    padding: 16px; 
+    background-color: #f8fafc; 
+    border-radius: 8px; 
+    border-left-width: 4px;
+    border-left-style: solid;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .summary-card.income-card { border-left-color: #16a34a; }
+  .summary-card.expense-card { border-left-color: #dc2626; }
+  .summary-card.profit-card { border-left-color: #7c3aed; }
+
+  .summary-card .label { 
+    font-size: 12px; 
+    text-transform: uppercase; 
+    color: #6b7280; 
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .summary-card .value { 
+    font-family: 'Inter', sans-serif; 
+    font-weight: 700;
+    font-size: 24px; 
+    margin-top: 8px; 
+  }
+  .income-val { color: #16a34a; }
+  .expense-val { color: #dc2626; }
+  .profit-val { color: #7c3aed; }
+
+  /* Seções de Dados */
+  h2 { 
+    font-family: 'Orbitron', sans-serif; 
+    font-size: 16px; 
+    margin: 32px 0 12px; 
+    color: #1a0533; 
+    padding-left: 8px;
+    border-left: 4px solid #7c3aed;
+    line-height: 1;
+  }
+
+  /* Tabelas */
+  table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: 13px; 
+    margin-top: 8px; 
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  th, td { 
+    text-align: left; 
+    padding: 10px 12px; 
+  }
+  th { 
+    background-color: #1a0533 !important; 
+    color: #ffffff; 
+    font-weight: 600; 
+  }
+  tr:nth-child(even) { background-color: #f9fafb !important; }
+  tr:not(:last-child) { border-bottom: 1px solid #e5e7eb; }
+  
   td.num, th.num { text-align: right; }
-  .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #999; }
-  .empty { color: #999; font-style: italic; padding: 8px 0; font-size: 13px; }
-  @media print { body { padding: 0; } }
+  td.bold { font-weight: 700; font-family: 'Inter', sans-serif; }
+
+  .empty { 
+    color: #6b7280; 
+    font-style: italic; 
+    padding: 12px 0; 
+    font-size: 13px; 
+  }
+
+  /* Rodapé */
+  .footer { 
+    margin-top: 48px; 
+    padding-top: 16px;
+    border-top: 1px solid #7c3aed;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px; 
+    color: #6b7280; 
+  }
+  .footer-center {
+    font-weight: 600;
+    color: #1a0533;
+  }
 </style>
 </head>
 <body>
-  <h1>AUTOBARBER</h1>
-  <div class="header-meta">
-    Relatório financeiro • Período: <strong>${from}</strong> a <strong>${to}</strong> • Gerado em ${generatedAt}
+  
+  <div class="header">
+    <div class="header-left">
+      <span class="logo-icon">✂️</span>
+      <h1>AUTOBARBER</h1>
+    </div>
+    <div class="header-meta">
+      <div class="subtitle">Relatório Financeiro</div>
+      <div class="period">Período: ${from} a ${to}<br>Gerado em: ${generatedAt}</div>
+    </div>
   </div>
 
   <div class="summary">
-    <div class="summary-card"><div class="label">Entradas</div><div class="value income">${fmt(c.income)}</div></div>
-    <div class="summary-card"><div class="label">Saídas</div><div class="value expense">${fmt(c.expense)}</div></div>
-    <div class="summary-card"><div class="label">Lucro Líquido</div><div class="value profit">${fmt(c.profit)}</div></div>
+    <div class="summary-card income-card">
+      <div class="label"><span>↑</span> Entradas</div>
+      <div class="value income-val">${fmt(c.income)}</div>
+    </div>
+    <div class="summary-card expense-card">
+      <div class="label"><span>↓</span> Saídas</div>
+      <div class="value expense-val">${fmt(c.expense)}</div>
+    </div>
+    <div class="summary-card profit-card">
+      <div class="label"><span>$</span> Lucro Líquido</div>
+      <div class="value profit-val">${fmt(c.profit)}</div>
+    </div>
   </div>
 
-  <h2>Por Barbeiro</h2>
+  <h2>POR BARBEIRO</h2>
   ${c.byBarber.length === 0 ? '<div class="empty">Sem dados no período.</div>' : `
   <table>
     <thead><tr><th>Barbeiro</th><th class="num">Agendamentos</th><th class="num">Receita</th><th class="num">Comissão</th></tr></thead>
     <tbody>
       ${c.byBarber.map(b => `
-        <tr><td>${b.name}</td><td class="num">${b.appointments}</td><td class="num">${fmt(b.revenue)}</td><td class="num">${fmt(b.commission)}</td></tr>
+        <tr><td>${b.name}</td><td class="num">${b.appointments}</td><td class="num bold income-val">${fmt(b.revenue)}</td><td class="num bold profit-val">${fmt(b.commission)}</td></tr>
       `).join("")}
     </tbody>
   </table>`}
 
-  <h2>Por Serviço</h2>
+  <h2>POR SERVIÇO</h2>
   ${c.byService.length === 0 ? '<div class="empty">Sem dados no período.</div>' : `
   <table>
     <thead><tr><th>Serviço</th><th class="num">Quantidade</th><th class="num">Receita</th></tr></thead>
     <tbody>
       ${c.byService.map(s => `
-        <tr><td>${s.name}</td><td class="num">${s.count}</td><td class="num">${fmt(s.revenue)}</td></tr>
+        <tr><td>${s.name}</td><td class="num">${s.count}</td><td class="num bold income-val">${fmt(s.revenue)}</td></tr>
       `).join("")}
     </tbody>
   </table>`}
 
-  <h2>Por Forma de Pagamento</h2>
+  <h2>POR FORMA DE PAGAMENTO</h2>
   ${c.byPayment.length === 0 ? '<div class="empty">Sem dados no período.</div>' : `
   <table>
     <thead><tr><th>Forma</th><th class="num">Total</th><th class="num">%</th></tr></thead>
     <tbody>
       ${c.byPayment.map(p => `
-        <tr><td>${p.name}</td><td class="num">${fmt(p.value)}</td><td class="num">${((p.value / totalPayments) * 100).toFixed(1)}%</td></tr>
+        <tr><td style="text-transform: capitalize;">${p.name}</td><td class="num bold">${fmt(p.value)}</td><td class="num">${((p.value / totalPayments) * 100).toFixed(1)}%</td></tr>
       `).join("")}
     </tbody>
   </table>`}
 
-  <h2>Clientes</h2>
+  <h2>CLIENTES NO PERÍODO</h2>
   <table>
     <thead><tr><th>Categoria</th><th class="num">Quantidade</th></tr></thead>
     <tbody>
-      <tr><td>Novos clientes</td><td class="num">${c.newClients}</td></tr>
-      <tr><td>Clientes recorrentes</td><td class="num">${c.recurringClients}</td></tr>
+      <tr><td>Novos clientes</td><td class="num bold">${c.newClients}</td></tr>
+      <tr><td>Clientes recorrentes</td><td class="num bold">${c.recurringClients}</td></tr>
     </tbody>
   </table>
 
-  <div class="footer">AutoBarber • Sistema de Gestão • ${generatedAt}</div>
+  <div class="footer">
+    <div class="footer-left">${generatedAt}</div>
+    <div class="footer-center">AutoBarber • Sistema de Gestão</div>
+    <div class="footer-right">Página 1 de 1</div>
+  </div>
 
   <script>window.onload = function() { setTimeout(function(){ window.print(); }, 300); };</script>
 </body>
