@@ -109,18 +109,19 @@ const Booking = () => {
       });
   }, [selectedBarber, selectedDate]);
 
-  // Generate time slots
+  // Generate time slots — uses sensible defaults when settings/schedules missing
   const timeSlots = useMemo(() => {
-    if (!settings || !selectedDate) return [];
+    if (!selectedDate) return [];
     const dayOfWeek = selectedDate.getDay();
     const barberSchedule = schedules.find(s => s.day_of_week === dayOfWeek);
 
-    const openH = barberSchedule ? barberSchedule.start_time : settings.opening_time;
-    const closeH = barberSchedule ? barberSchedule.end_time : settings.closing_time;
+    // Defaults: 09:00 → 19:00 with 30-min slots
+    const openH = barberSchedule?.start_time ?? settings?.opening_time ?? "09:00";
+    const closeH = barberSchedule?.end_time ?? settings?.closing_time ?? "19:00";
 
     let mins = timeStringToMinutes(openH);
     const end = timeStringToMinutes(closeH);
-    const interval = settings.appointment_interval || 30;
+    const interval = settings?.appointment_interval || 30;
     if (interval <= 0 || mins >= end) return [];
     const slots: string[] = [];
     const now = new Date();

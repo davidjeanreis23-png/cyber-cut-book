@@ -1,6 +1,6 @@
-import { createClient } from "npm:@supabase/supabase-js@2.95.0";
-import { corsHeaders } from "npm:@supabase/supabase-js@2.95.0/cors";
+import { createClient } from "npm:@supabase/supabase-js@2.45.0";
 import webpush from "npm:web-push@3.6.7";
+import { corsHeaders } from "../_shared/cors.ts";
 
 interface SendPushBody {
   user_id?: string;
@@ -73,7 +73,6 @@ Deno.serve(async (req) => {
             await webpush.sendNotification(sub, payload);
             return { user_id: p.id, sent: true };
           } catch (e: any) {
-            // Subscription expired or invalid -> clear it
             if (e?.statusCode === 404 || e?.statusCode === 410) {
               await supabase.from("profiles").update({ push_token: null }).eq("id", p.id);
             }
