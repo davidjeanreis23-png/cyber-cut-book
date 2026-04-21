@@ -13,6 +13,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Scissors, Clock, DollarSign, MapPin, Banknote, CreditCard as CreditCardIcon, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { timeStringToMinutes } from "@/lib/booking-time";
 import { format, isBefore, startOfDay, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -32,7 +33,7 @@ interface Schedule {
 }
 
 const Booking = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState(0);
@@ -51,17 +52,41 @@ const Booking = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      const [b, s, set] = await Promise.all([
+      const [b, s] = await Promise.all([
         supabase.from("barbers").select("id,name,photo_url,specialties").eq("is_active", true),
         supabase.from("services").select("id,name,description,duration_minutes,price,category").eq("is_active", true),
-        supabase.from("settings").select("opening_time,closing_time,appointment_interval,barber_address").limit(1).single(),
       ]);
       if (b.data) setBarbers(b.data);
       if (s.data) setServices(s.data);
-      if (set.data) setSettings(set.data);
     };
     fetch();
   }, []);
+
+  // Settings are tenant-scoped (RLS). Using .limit(1).single() breaks for master (multiple rows).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      let tenantId: string | null = null;
+      if (selectedBarber) {
+        const { data: b } = await supabase.from("barbers").select("tenant_id").eq("id", selectedBarber).maybeSingle();
+        tenantId = b?.tenant_id ?? null;
+      }
+      if (!tenantId) tenantId = profile?.tenant_id ?? null;
+      if (!tenantId) {
+        if (!cancelled) setSettings(null);
+        return;
+      }
+      const { data: settingsRow } = await supabase
+        .from("settings")
+        .select("opening_time,closing_time,appointment_interval,barber_address")
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+      if (!cancelled) setSettings(settingsRow ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedBarber, profile?.tenant_id]);
 
   // Fetch barber schedules when barber selected
   useEffect(() => {
@@ -93,12 +118,11 @@ const Booking = () => {
     const openH = barberSchedule ? barberSchedule.start_time : settings.opening_time;
     const closeH = barberSchedule ? barberSchedule.end_time : settings.closing_time;
 
-    const [oh, om] = openH.split(":").map(Number);
-    const [ch, cm] = closeH.split(":").map(Number);
-    const interval = settings.appointment_interval;
+    let mins = timeStringToMinutes(openH);
+    const end = timeStringToMinutes(closeH);
+    const interval = settings.appointment_interval || 30;
+    if (interval <= 0 || mins >= end) return [];
     const slots: string[] = [];
-    let mins = oh * 60 + om;
-    const end = ch * 60 + cm;
     const now = new Date();
 
     while (mins < end) {
