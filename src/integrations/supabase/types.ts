@@ -383,6 +383,42 @@ export type Database = {
           },
         ]
       }
+      notification_settings: {
+        Row: {
+          created_at: string
+          id: string
+          push_cancelled: boolean
+          push_confirmed: boolean
+          push_loyalty_points: boolean
+          push_payment: boolean
+          push_reminder_24h: boolean
+          push_reward_available: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          push_cancelled?: boolean
+          push_confirmed?: boolean
+          push_loyalty_points?: boolean
+          push_payment?: boolean
+          push_reminder_24h?: boolean
+          push_reward_available?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          push_cancelled?: boolean
+          push_confirmed?: boolean
+          push_loyalty_points?: boolean
+          push_payment?: boolean
+          push_reminder_24h?: boolean
+          push_reward_available?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           appointment_id: string | null
