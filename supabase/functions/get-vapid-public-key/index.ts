@@ -1,4 +1,4 @@
-import { corsHeaders } from "npm:@supabase/supabase-js@2.95.0/cors";
+import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve((req) => {
   if (req.method === "OPTIONS") {
