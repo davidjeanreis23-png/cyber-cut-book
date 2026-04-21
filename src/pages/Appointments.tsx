@@ -22,6 +22,7 @@ interface Appointment {
   payment_status: string;
   payment_method: string | null;
   notes: string | null;
+  google_event_id: string | null;
   barbers: { name: string } | null;
   services: { name: string; price: number } | null;
 }
@@ -51,7 +52,7 @@ const Appointments = () => {
     if (!user) return;
     const { data } = await supabase
       .from("appointments")
-      .select("id, appointment_date, appointment_time, status, payment_status, payment_method, notes, barbers(name), services(name, price)")
+      .select("id, appointment_date, appointment_time, status, payment_status, payment_method, notes, google_event_id, barbers(name), services(name, price)")
       .eq("user_id", user.id)
       .order("appointment_date", { ascending: false });
     setAppointments((data as any) || []);
@@ -60,28 +61,78 @@ const Appointments = () => {
 
   useEffect(() => { fetchAppointments(); }, [user]);
 
-  const handleCancel = async (id: string) => {
-    const { error } = await supabase.from("appointments").update({ status: "cancelled" as any }).eq("id", id);
-    if (error) { toast.error("Erro ao cancelar"); return; }
+  const handleCancel = async (a: Appointment) => {
     try {
-      await supabase.functions.invoke("sync-google-calendar", {
-        body: { appointment_id: id, action: "delete" },
-      });
-    } catch (e) { console.error("Calendar sync error:", e); }
-    if (user) {
+      if (!user) return;
+      const { data: updated, error } = await supabase
+        .from("appointments")
+        .update({ status: "cancelled" } as any)
+        .eq("id", a.id)
+        .eq("user_id", user.id)
+        .select()
+        .single();
+
+      if (error || !updated) {
+        toast.error("Ocorreu um erro ou você não tem permissão para cancelar.");
+        return;
+      }
+
+      if (a.google_event_id) {
+        try {
+          await supabase.functions.invoke("sync-google-calendar", {
+            body: { appointment_id: a.id, action: "delete" },
+          });
+        } catch (e) {
+          console.error("Calendar sync error:", e);
+        }
+      }
+
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("email")
+          .eq("id", user.id)
+          .single();
+          
+        if (profile?.email) {
+          const fDate = format(new Date(a.appointment_date + "T00:00"), "dd/MM/yyyy");
+          await supabase.functions.invoke("send-booking-email", {
+            body: {
+              to: profile.email,
+              subject: "Cancelamento de Agendamento - AutoBarber",
+              appointment: {
+                barber_name: a.barbers?.name || "Barbearia",
+                service_name: a.services?.name || "Serviço",
+                date: fDate,
+                time: a.appointment_time,
+                price: a.services?.price || 0,
+              },
+            },
+          });
+        }
+      } catch (e) {
+        console.error("Email send error:", e);
+      }
+
       try {
         await supabase.functions.invoke("send-push", {
           body: {
             user_id: user.id,
             title: "❌ Agendamento cancelado",
-            message: "Seu agendamento foi cancelado com sucesso.",
+            message: `Seu agendamento para ${a.services?.name || "serviço"} foi cancelado.`,
             url: "/appointments",
           },
         });
-      } catch (e) { console.error("Push error:", e); }
+      } catch (e) {
+        console.error("Push error:", e);
+      }
+
+      toast.success("Agendamento cancelado com sucesso!");
+      fetchAppointments();
+    } catch (err: any) {
+      console.error("Erro inesperado:", err);
+      toast.error("Ocorreu um erro inesperado.");
     }
-    toast.success("Agendamento cancelado");
-    fetchAppointments();
   };
 
   const handleDelete = async (id: string) => {
@@ -167,10 +218,9 @@ const Appointments = () => {
                   </p>
                 </div>
 
-                {/* Ações */}
                 <div className="flex items-center justify-end gap-2">
-                  {a.status === "confirmed" && new Date(a.appointment_date) >= new Date(new Date().toDateString()) && (
-                    <Button variant="destructive" size="sm" onClick={() => handleCancel(a.id)}>
+                  {a.status === "confirmed" && new Date(a.appointment_date + "T" + a.appointment_time) > new Date() && (
+                    <Button variant="destructive" size="sm" onClick={() => handleCancel(a)}>
                       Cancelar
                     </Button>
                   )}
