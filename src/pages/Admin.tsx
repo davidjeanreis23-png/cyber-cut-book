@@ -18,6 +18,7 @@ import ConfirmDeleteButton from "@/components/ConfirmDeleteButton";
 import FinancialTab from "@/components/admin/FinancialTab";
 import ReportsTab from "@/components/admin/ReportsTab";
 import ClientsTab from "@/components/admin/ClientsTab";
+import NotificationsTab from "@/components/admin/NotificationsTab";
 import AdminSidebar, { AdminSection } from "@/components/admin/AdminSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import BarberPhotoUpload from "@/components/BarberPhotoUpload";
@@ -438,7 +439,7 @@ const Admin = () => {
       case "services": return <ServicesTab />;
       case "settings": return <SettingsTab />;
       case "loyalty": return <PlaceholderTab icon={Bell} title="Fidelidade" />;
-      case "notifications": return <PlaceholderTab icon={Bell} title="Notificações" />;
+      case "notifications": return <NotificationsTab />;
     }
   };
 
