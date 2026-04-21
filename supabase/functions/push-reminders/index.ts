@@ -1,5 +1,5 @@
-import { createClient } from "npm:@supabase/supabase-js@2.95.0";
-import { corsHeaders } from "npm:@supabase/supabase-js@2.95.0/cors";
+import { createClient } from "npm:@supabase/supabase-js@2.45.0";
+import { corsHeaders } from "../_shared/cors.ts";
 
 /**
  * Cron-driven reminder dispatcher.
@@ -18,7 +18,6 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Window: appointments scheduled between 23h45m and 24h15m from now
     const now = new Date();
     const lower = new Date(now.getTime() + (24 * 60 - 15) * 60 * 1000);
     const upper = new Date(now.getTime() + (24 * 60 + 15) * 60 * 1000);
@@ -40,7 +39,6 @@ Deno.serve(async (req) => {
       const apptDt = new Date(`${a.appointment_date}T${a.appointment_time}`);
       if (apptDt < lower || apptDt > upper) continue;
 
-      // Idempotency: check if we already sent a reminder for this appointment
       const { data: existing } = await supabase
         .from("notifications")
         .select("id")
@@ -54,7 +52,6 @@ Deno.serve(async (req) => {
       const title = "⏰ Lembrete: corte amanhã";
       const message = `Não esqueça: ${serviceName} às ${time}.`;
 
-      // Insert in-app notification (also serves as idempotency)
       await supabase.from("notifications").insert({
         user_id: a.user_id,
         title,
@@ -63,7 +60,6 @@ Deno.serve(async (req) => {
         appointment_id: a.id,
       });
 
-      // Fire push
       await supabase.functions.invoke("send-push", {
         body: { user_id: a.user_id, title, message, url: "/appointments" },
       });
