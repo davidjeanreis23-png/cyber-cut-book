@@ -66,7 +66,7 @@ const NotificationsTab = () => {
     setSettings(next);
     const { error } = await supabase
       .from("notification_settings")
-      .update({ [key]: value })
+      .update({ [key]: value } as any)
       .eq("id", settings.id);
     if (error) {
       toast.error("Não foi possível salvar");
