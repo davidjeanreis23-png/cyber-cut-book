@@ -22,6 +22,7 @@ import NotificationsTab from "@/components/admin/NotificationsTab";
 import AdminSidebar, { AdminSection } from "@/components/admin/AdminSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import BarberPhotoUpload from "@/components/BarberPhotoUpload";
+import RescheduleModal from "@/components/RescheduleModal";
 
 
 // ─── Stats Tab ───
@@ -70,6 +71,7 @@ const StatsTab = () => {
 const AppointmentsTab = () => {
   const [appts, setAppts] = useState<any[]>([]);
   const [statusF, setStatusF] = useState("all");
+  const [rescheduleAppointment, setRescheduleAppointment] = useState<any | null>(null);
 
   const fetchAppts = async () => {
     const q = supabase.from("appointments")
@@ -140,6 +142,7 @@ const AppointmentsTab = () => {
               <div className="flex items-center gap-2 shrink-0">
                 {a.status === "confirmed" && (
                   <>
+                    <Button size="sm" variant="outline" className="border-primary/50 text-primary hover:bg-primary/20" onClick={() => setRescheduleAppointment(a)}>Reagendar</Button>
                     <Button size="sm" variant="neon" onClick={() => updateStatus(a.id, "completed")}>Concluir</Button>
                     <Button size="sm" variant="destructive" onClick={() => updateStatus(a.id, "cancelled")}>Cancelar</Button>
                   </>
@@ -154,6 +157,14 @@ const AppointmentsTab = () => {
           </GlassCard>
         ))}
       </div>
+      {rescheduleAppointment && (
+        <RescheduleModal
+          open={!!rescheduleAppointment}
+          onOpenChange={(v) => !v && setRescheduleAppointment(null)}
+          appointment={rescheduleAppointment}
+          onSuccess={fetchAppts}
+        />
+      )}
     </div>
   );
 };

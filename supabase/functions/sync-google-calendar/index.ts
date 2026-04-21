@@ -242,7 +242,7 @@ serve(async (req) => {
 
     console.log("Appointment encontrado:", { id: appt.id, date: appt.appointment_date, time: appt.appointment_time, status: appt.status });
 
-    const calAction = action || "create";
+    let calAction = action || "create";
     const calendarId = encodeURIComponent(CALENDAR_ID);
 
     // DELETE event
@@ -271,8 +271,47 @@ serve(async (req) => {
       });
     }
 
+    // UPDATE event
+    if (calAction === "update" && appt.google_event_id && !appt.google_event_id.startsWith("pending_")) {
+      const startDateTime = `${appt.appointment_date}T${appt.appointment_time}:00`;
+      const durationMins = (appt as any).services?.duration_minutes || 30;
+      const endDate = new Date(`${startDateTime}-03:00`);
+      endDate.setMinutes(endDate.getMinutes() + durationMins);
+
+      const event = {
+        summary: `AutoBarber - ${(appt as any).services?.name || "Agendamento"} com ${(appt as any).barbers?.name || "N/A"}`,
+        description: `Cliente: ${profile?.full_name || "N/A"}\nE-mail: ${profile?.email || "N/A"}`,
+        start: { dateTime: `${startDateTime}-03:00`, timeZone: "America/Sao_Paulo" },
+        end: { dateTime: endDate.toISOString(), timeZone: "America/Sao_Paulo" },
+        reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 30 }] },
+      };
+
+      console.log("Atualizando evento:", appt.google_event_id);
+      const updateRes = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${appt.google_event_id}`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify(event),
+        }
+      );
+
+      const updateBody = await updateRes.text();
+      console.log("Update status:", updateRes.status);
+      
+      if (updateRes.ok) {
+        return new Response(JSON.stringify({ success: true, message: "Event updated", google_event_id: appt.google_event_id }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } else {
+        console.warn("Update falhou (talvez deletado no google), fall-through para CREATE.", updateBody);
+        calAction = "create"; // fallback to create!
+      }
+    }
+
     // CREATE event
-    const startDateTime = `${appt.appointment_date}T${appt.appointment_time}:00`;
+    if (calAction === "create") {
+      const startDateTime = `${appt.appointment_date}T${appt.appointment_time}:00`;
     const durationMins = (appt as any).services?.duration_minutes || 30;
     const endDate = new Date(`${startDateTime}-03:00`);
     endDate.setMinutes(endDate.getMinutes() + durationMins);
@@ -320,6 +359,14 @@ serve(async (req) => {
       success: true,
       message: "Event created",
       google_event_id: createdEvent.id,
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+    } // end logic if calAction===create
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: "Action finished or ignored",
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

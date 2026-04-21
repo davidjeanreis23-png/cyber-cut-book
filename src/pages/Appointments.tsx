@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import ConfirmDeleteButton from "@/components/ConfirmDeleteButton";
 import MapButton from "@/components/MapButton";
+import RescheduleModal from "@/components/RescheduleModal";
 
 interface Appointment {
   id: string;
@@ -47,6 +48,7 @@ const Appointments = () => {
   const [filter, setFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [rescheduleAppointment, setRescheduleAppointment] = useState<Appointment | null>(null);
 
   const fetchAppointments = async () => {
     if (!user) return;
@@ -220,9 +222,14 @@ const Appointments = () => {
 
                 <div className="flex items-center justify-end gap-2">
                   {a.status === "confirmed" && new Date(a.appointment_date + "T" + a.appointment_time) > new Date() && (
-                    <Button variant="destructive" size="sm" onClick={() => handleCancel(a)}>
-                      Cancelar
-                    </Button>
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => setRescheduleAppointment(a)} className="border-primary/50 hover:bg-primary/20 text-primary">
+                        Reagendar
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleCancel(a)}>
+                        Cancelar
+                      </Button>
+                    </>
                   )}
                   <ConfirmDeleteButton
                     onConfirm={() => handleDelete(a.id)}
@@ -233,6 +240,15 @@ const Appointments = () => {
               </GlassCard>
             ))}
           </div>
+        )}
+
+        {rescheduleAppointment && (
+          <RescheduleModal
+            open={!!rescheduleAppointment}
+            onOpenChange={(v) => !v && setRescheduleAppointment(null)}
+            appointment={rescheduleAppointment}
+            onSuccess={fetchAppointments}
+          />
         )}
       </main>
     </div>
