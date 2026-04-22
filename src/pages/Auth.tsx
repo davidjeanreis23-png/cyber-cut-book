@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable/index";
@@ -11,6 +11,13 @@ import GlassCard from "@/components/GlassCard";
 import FloatingParticles from "@/components/FloatingParticles";
 import SEO from "@/components/SEO";
 
+const isTenantBlocked = (tenant: any) => {
+  if (!tenant) return false;
+  if (tenant.status === "blocked" || tenant.status === "cancelled") return true;
+  if (tenant.status === "trial" && new Date(tenant.trial_end) < new Date()) return true;
+  return false;
+};
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -18,8 +25,17 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const [justSignedIn, setJustSignedIn] = useState(false);
+  const { signIn, signUp, user, isAdmin, isMaster, tenant, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!justSignedIn || authLoading || !user) return;
+    if (isMaster) navigate("/master", { replace: true });
+    else if (isAdmin) navigate("/admin", { replace: true });
+    else if (isTenantBlocked(tenant)) navigate("/blocked", { replace: true });
+    else navigate("/", { replace: true });
+  }, [justSignedIn, authLoading, user, isAdmin, isMaster, tenant, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +56,7 @@ const Auth = () => {
         }
       } else {
         toast.success("Login realizado com sucesso!");
-        navigate("/");
+        setJustSignedIn(true);
       }
     } else {
       if (!fullName.trim()) {
@@ -76,7 +92,7 @@ const Auth = () => {
       }
 
       toast.success("Login realizado com sucesso!");
-      navigate("/");
+      setJustSignedIn(true);
     } catch (error) {
       toast.error("Erro ao entrar com Google");
     }
