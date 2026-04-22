@@ -42,11 +42,11 @@ const PushBootstrap = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <PushBootstrap />
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <PushBootstrap />
+          <Toaster />
+          <Sonner />
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<Index />} />
@@ -59,8 +59,8 @@ const App = () => (
             <Route path="/auth/google/callback" element={<ProtectedRoute><GoogleCalendarCallback /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
