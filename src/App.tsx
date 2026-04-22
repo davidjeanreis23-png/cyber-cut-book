@@ -24,10 +24,12 @@ const isTenantBlocked = (tenant: any) => {
   return false;
 };
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, tenant, isMaster } = useAuth();
+const ProtectedRoute = ({ children, requireAdmin, requireMaster }: { children: React.ReactNode; requireAdmin?: boolean; requireMaster?: boolean }) => {
+  const { user, loading, tenant, isMaster, isAdmin } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
+  if (requireMaster && !isMaster) return <Navigate to="/" replace />;
+  if (requireAdmin && !isAdmin && !isMaster) return <Navigate to="/" replace />;
   if (!isMaster && isTenantBlocked(tenant)) return <Navigate to="/blocked" replace />;
   return <>{children}</>;
 };
@@ -54,8 +56,8 @@ const App = () => (
             <Route path="/booking" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
             <Route path="/appointments" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
             <Route path="/loyalty" element={<ProtectedRoute><Loyalty /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-            <Route path="/master" element={<ProtectedRoute><Master /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
+            <Route path="/master" element={<ProtectedRoute requireMaster><Master /></ProtectedRoute>} />
             <Route path="/auth/google/callback" element={<ProtectedRoute><GoogleCalendarCallback /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
