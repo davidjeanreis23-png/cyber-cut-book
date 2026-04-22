@@ -24,9 +24,15 @@ const isTenantBlocked = (tenant: any) => {
   return false;
 };
 
+const AuthLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="h-10 w-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+  </div>
+);
+
 const ProtectedRoute = ({ children, requireAdmin, requireMaster }: { children: React.ReactNode; requireAdmin?: boolean; requireMaster?: boolean }) => {
   const { user, loading, tenant, isMaster, isAdmin } = useAuth();
-  if (loading) return null;
+  if (loading) return <AuthLoader />;
   if (!user) return <Navigate to="/auth" replace />;
   if (requireMaster && !isMaster) return <Navigate to="/" replace />;
   if (requireAdmin && !isAdmin && !isMaster) return <Navigate to="/" replace />;
