@@ -748,6 +748,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_public_settings: {
+        Args: { _tenant_id: string }
+        Returns: {
+          appointment_interval: number
+          barber_address: string
+          closing_time: string
+          created_at: string
+          current_theme: Database["public"]["Enums"]["theme_option"]
+          default_appointment_duration: number
+          google_calendar_connected: boolean
+          id: string
+          loyalty_points_per_booking: number
+          opening_time: string
+          payment_gateway: string
+          tenant_id: string
+          updated_at: string
+          whatsapp_connected: boolean
+          whatsapp_number: string
+        }[]
+      }
       get_user_tenant_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
