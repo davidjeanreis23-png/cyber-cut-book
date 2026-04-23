@@ -745,68 +745,7 @@ export type Database = {
       }
     }
     Views: {
-      settings_public: {
-        Row: {
-          appointment_interval: number | null
-          barber_address: string | null
-          closing_time: string | null
-          created_at: string | null
-          current_theme: Database["public"]["Enums"]["theme_option"] | null
-          default_appointment_duration: number | null
-          google_calendar_connected: boolean | null
-          id: string | null
-          loyalty_points_per_booking: number | null
-          opening_time: string | null
-          payment_gateway: string | null
-          tenant_id: string | null
-          updated_at: string | null
-          whatsapp_connected: boolean | null
-          whatsapp_number: string | null
-        }
-        Insert: {
-          appointment_interval?: number | null
-          barber_address?: string | null
-          closing_time?: string | null
-          created_at?: string | null
-          current_theme?: Database["public"]["Enums"]["theme_option"] | null
-          default_appointment_duration?: number | null
-          google_calendar_connected?: boolean | null
-          id?: string | null
-          loyalty_points_per_booking?: number | null
-          opening_time?: string | null
-          payment_gateway?: string | null
-          tenant_id?: string | null
-          updated_at?: string | null
-          whatsapp_connected?: boolean | null
-          whatsapp_number?: string | null
-        }
-        Update: {
-          appointment_interval?: number | null
-          barber_address?: string | null
-          closing_time?: string | null
-          created_at?: string | null
-          current_theme?: Database["public"]["Enums"]["theme_option"] | null
-          default_appointment_duration?: number | null
-          google_calendar_connected?: boolean | null
-          id?: string | null
-          loyalty_points_per_booking?: number | null
-          opening_time?: string | null
-          payment_gateway?: string | null
-          tenant_id?: string | null
-          updated_at?: string | null
-          whatsapp_connected?: boolean | null
-          whatsapp_number?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "settings_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       get_public_settings: {
