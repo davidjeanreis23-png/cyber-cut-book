@@ -22,7 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Variáveis de ambiente (credenciais)
-.env
-.env.*
