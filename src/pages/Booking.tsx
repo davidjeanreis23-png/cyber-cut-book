@@ -235,6 +235,7 @@ const Booking = () => {
             service_name: selectedServiceData?.name,
             price: selectedServiceData?.price,
             payer_email: user.email,
+            payment_method: paymentMethod,
           },
         });
 
