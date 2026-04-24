@@ -46,6 +46,15 @@ serve(async (req) => {
       });
     }
 
+    // Diagnostic log: confirm which kind of token is being used
+    const tokenPrefix = ACCESS_TOKEN.substring(0, 8);
+    const tokenKind = ACCESS_TOKEN.startsWith("APP_USR-")
+      ? "PRODUCTION (APP_USR-)"
+      : ACCESS_TOKEN.startsWith("TEST-")
+      ? "SANDBOX (TEST-)"
+      : `UNKNOWN (${tokenPrefix}...)`;
+    console.log(`[create-payment] Token kind: ${tokenKind} | payment_method requested: ${payment_method}`);
+
     // Force a single payment type when the user picked one in the app
     // Mercado Pago payment_type_id reference: "credit_card", "debit_card", "ticket" (boleto), "bank_transfer" (Pix), "atm"
     const ALL_TYPES = ["credit_card", "debit_card", "ticket", "atm", "bank_transfer"];
