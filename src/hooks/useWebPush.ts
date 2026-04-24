@@ -32,20 +32,27 @@ export const useWebPush = () => {
         }
         if (Notification.permission !== "granted") return;
 
-        // Get VAPID public key from edge function
-        const { data: keyData, error: keyError } = await supabase.functions.invoke(
-          "get-vapid-public-key"
-        );
-        if (keyError || !keyData?.publicKey) {
-          console.warn("[push] Failed to fetch VAPID public key", keyError);
-          return;
-        }
-
+        // Reuse existing subscription before fetching the VAPID key
         let sub = await reg.pushManager.getSubscription();
+
         if (!sub) {
+          // Cache VAPID key in sessionStorage to avoid repeated edge function calls
+          let publicKey = sessionStorage.getItem("vapid_pk");
+          if (!publicKey) {
+            const { data: keyData, error: keyError } = await supabase.functions.invoke(
+              "get-vapid-public-key"
+            );
+            if (keyError || !keyData?.publicKey) {
+              console.warn("[push] Failed to fetch VAPID public key", keyError);
+              return;
+            }
+            publicKey = keyData.publicKey as string;
+            sessionStorage.setItem("vapid_pk", publicKey);
+          }
+
           sub = await reg.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(keyData.publicKey),
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
           });
         }
 
