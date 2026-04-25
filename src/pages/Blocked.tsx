@@ -63,7 +63,7 @@ const Blocked = () => {
           </h2>
           <p className="text-muted-foreground">
             Assine o plano <span className="text-primary font-semibold">PRO</span> por apenas{" "}
-            <span className="text-primary font-bold">R$ 39/mês</span> e continue usando o
+            <span className="text-primary font-bold">R$ 29,99/mês</span> e continue usando o
             AutoBarber sem limites.
           </p>
 
@@ -75,7 +75,7 @@ const Blocked = () => {
             disabled={loading}
           >
             <Sparkles className="h-5 w-5" />
-            {loading ? "Gerando link..." : "ASSINAR AGORA — R$ 39/mês"}
+            {loading ? "Gerando link..." : "ASSINAR AGORA — R$ 29,99/mês"}
           </Button>
 
           <Button variant="neon-outline" size="lg" asChild className="w-full">
