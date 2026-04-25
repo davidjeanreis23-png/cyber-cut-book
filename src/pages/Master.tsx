@@ -48,7 +48,7 @@ const DashboardTab = ({ tenants }: { tenants: Tenant[] }) => {
   const active = tenants.filter((t) => t.status === "active").length;
   const blocked = tenants.filter((t) => t.status === "blocked").length;
   const cancelled = tenants.filter((t) => t.status === "cancelled").length;
-  const mrr = active * 39;
+  const mrr = active * 29.99;
 
   const cards = [
     { label: "Total", value: total, icon: Building2, color: "text-primary" },
@@ -207,53 +207,107 @@ const TenantsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () => void
 
 // ─── Subscriptions Tab ───
 const SubscriptionsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () => void }) => {
+  const [busy, setBusy] = useState<string | null>(null);
+
   const renew = async (t: Tenant) => {
-    const newPaid = new Date();
-    newPaid.setMonth(newPaid.getMonth() + 1);
-    const { error } = await supabase
-      .from("tenants")
-      .update({ paid_until: newPaid.toISOString(), status: "active" })
-      .eq("id", t.id);
-    if (error) toast.error(error.message);
-    else { toast.success("Renovado +30 dias"); reload(); }
+    setBusy(t.id);
+    try {
+      const { error } = await supabase.functions.invoke("renew-subscription-manual", {
+        body: { tenant_id: t.id, days: 30 },
+      });
+      if (error) throw error;
+      toast.success("Renovado +30 dias");
+      reload();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao renovar");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const cancel = async (t: Tenant) => {
+    if (!confirm(`Cancelar a assinatura de "${t.name}"? Isso bloqueia o acesso e cancela no Mercado Pago.`)) return;
+    setBusy(t.id);
+    try {
+      const { error } = await supabase.functions.invoke("cancel-subscription", {
+        body: { tenant_id: t.id },
+      });
+      if (error) throw error;
+      toast.success("Assinatura cancelada");
+      reload();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao cancelar");
+    } finally {
+      setBusy(null);
+    }
   };
 
   return (
     <GlassCard className="p-4 overflow-x-auto">
       <h2 className="font-display text-2xl text-neon mb-4">Assinaturas</h2>
+      <p className="text-sm text-muted-foreground mb-4">
+        Plano PRO — <span className="text-primary font-semibold">R$ 29,99/mês</span> • Webhook MP:{" "}
+        <code className="text-xs">https://tegbsetxdvgqojmlfwig.supabase.co/functions/v1/mercadopago-webhook</code>
+      </p>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Barbearia</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Valor</TableHead>
             <TableHead>Subscription ID</TableHead>
             <TableHead>Pago até</TableHead>
-            <TableHead>Ação</TableHead>
+            <TableHead>Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {tenants.length === 0 ? (
-            <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Sem barbearias</TableCell></TableRow>
+            <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Sem barbearias</TableCell></TableRow>
           ) : tenants.map((t) => {
             const overdue = t.paid_until && new Date(t.paid_until) < new Date();
             return (
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.name}</TableCell>
                 <TableCell>
-                  {t.status === "active" && !overdue ? (
-                    <Badge className="bg-green-500/20 text-green-400 border border-green-500/40">Pago</Badge>
+                  {t.status === "cancelled" ? (
+                    <Badge className="bg-gray-500/20 text-gray-400 border border-gray-500/40">Cancelada</Badge>
+                  ) : t.status === "blocked" ? (
+                    <Badge className="bg-red-500/20 text-red-400 border border-red-500/40">Bloqueada</Badge>
+                  ) : t.status === "active" && !overdue ? (
+                    <Badge className="bg-green-500/20 text-green-400 border border-green-500/40">Ativa</Badge>
                   ) : overdue ? (
-                    <Badge className="bg-red-500/20 text-red-400 border border-red-500/40">Atrasado</Badge>
+                    <Badge className="bg-red-500/20 text-red-400 border border-red-500/40">Atrasada</Badge>
                   ) : (
-                    <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40">Pendente</Badge>
+                    <Badge className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40">Trial</Badge>
                   )}
                 </TableCell>
-                <TableCell className="text-xs">{t.subscription_id || "—"}</TableCell>
+                <TableCell>R$ {Number(t.plan_price || 29.99).toFixed(2)}</TableCell>
+                <TableCell className="text-xs max-w-[160px] truncate" title={t.subscription_id || ""}>
+                  {t.subscription_id || "—"}
+                </TableCell>
                 <TableCell>{t.paid_until ? format(new Date(t.paid_until), "dd/MM/yyyy") : "—"}</TableCell>
                 <TableCell>
-                  <Button size="sm" variant="neon-outline" onClick={() => renew(t)}>
-                    <RefreshCw className="h-3 w-3" /> Renovar
-                  </Button>
+                  <div className="flex gap-1 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant="neon-outline"
+                      disabled={busy === t.id}
+                      onClick={() => renew(t)}
+                      title="Renovar +30 dias"
+                    >
+                      <RefreshCw className="h-3 w-3" /> Renovar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy === t.id || t.status === "cancelled"}
+                      onClick={() => cancel(t)}
+                      title="Cancelar assinatura"
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      <Ban className="h-3 w-3" /> Cancelar
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             );
