@@ -307,21 +307,27 @@ const SubscriptionsTab = ({ tenants, reload, setTenants }: { tenants: Tenant[]; 
                     <Button
                       size="sm"
                       variant="neon-outline"
-                      disabled={busy === t.id}
+                      disabled={busy?.id === t.id}
                       onClick={() => renew(t)}
                       title="Renovar +30 dias"
                     >
-                      <RefreshCw className="h-3 w-3" /> Renovar
+                      {busy?.id === t.id && busy.action === "renew"
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <RefreshCw className="h-3 w-3" />}
+                      {busy?.id === t.id && busy.action === "renew" ? "Renovando..." : "Renovar"}
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
-                      disabled={busy === t.id || t.status === "cancelled"}
+                      disabled={busy?.id === t.id || t.status === "cancelled"}
                       onClick={() => cancel(t)}
                       title="Cancelar assinatura"
                       className="text-red-400 hover:text-red-300"
                     >
-                      <Ban className="h-3 w-3" /> Cancelar
+                      {busy?.id === t.id && busy.action === "cancel"
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <Ban className="h-3 w-3" />}
+                      {busy?.id === t.id && busy.action === "cancel" ? "Cancelando..." : "Cancelar"}
                     </Button>
                   </div>
                 </TableCell>
