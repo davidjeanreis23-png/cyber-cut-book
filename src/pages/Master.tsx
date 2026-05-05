@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Crown, Building2, DollarSign, Clock, CheckCircle2, XCircle, Ban, RefreshCw } from "lucide-react";
+import { Plus, Crown, Building2, DollarSign, Clock, CheckCircle2, XCircle, Ban, RefreshCw, Loader2 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 
 interface Tenant {
@@ -206,20 +206,34 @@ const TenantsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () => void
 };
 
 // ─── Subscriptions Tab ───
-const SubscriptionsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () => void }) => {
-  const [busy, setBusy] = useState<string | null>(null);
+const SubscriptionsTab = ({ tenants, reload, setTenants }: { tenants: Tenant[]; reload: () => void; setTenants: React.Dispatch<React.SetStateAction<Tenant[]>> }) => {
+  const [busy, setBusy] = useState<{ id: string; action: "renew" | "cancel" } | null>(null);
+
+  const extractError = (e: any): string => {
+    // Supabase functions.invoke errors often hide the body in e.context
+    const ctx = e?.context;
+    if (ctx?.body) {
+      try {
+        const parsed = typeof ctx.body === "string" ? JSON.parse(ctx.body) : ctx.body;
+        if (parsed?.error) return parsed.error;
+      } catch { /* ignore */ }
+    }
+    return e?.message || "Erro desconhecido";
+  };
 
   const renew = async (t: Tenant) => {
-    setBusy(t.id);
+    setBusy({ id: t.id, action: "renew" });
     try {
-      const { error } = await supabase.functions.invoke("renew-subscription-manual", {
+      const { data, error } = await supabase.functions.invoke("renew-subscription-manual", {
         body: { tenant_id: t.id, days: 30 },
       });
       if (error) throw error;
-      toast.success("Renovado +30 dias");
+      // Optimistic update
+      setTenants((prev) => prev.map((x) => x.id === t.id ? { ...x, status: "active", paid_until: data?.paid_until ?? x.paid_until } : x));
+      toast.success(`"${t.name}" renovada por +30 dias`);
       reload();
     } catch (e: any) {
-      toast.error(e.message || "Erro ao renovar");
+      toast.error(`Falha ao renovar: ${extractError(e)}`);
     } finally {
       setBusy(null);
     }
@@ -227,16 +241,18 @@ const SubscriptionsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () =
 
   const cancel = async (t: Tenant) => {
     if (!confirm(`Cancelar a assinatura de "${t.name}"? Isso bloqueia o acesso e cancela no Mercado Pago.`)) return;
-    setBusy(t.id);
+    setBusy({ id: t.id, action: "cancel" });
     try {
       const { error } = await supabase.functions.invoke("cancel-subscription", {
         body: { tenant_id: t.id },
       });
       if (error) throw error;
-      toast.success("Assinatura cancelada");
+      // Optimistic update
+      setTenants((prev) => prev.map((x) => x.id === t.id ? { ...x, status: "cancelled" } : x));
+      toast.success(`Assinatura de "${t.name}" cancelada`);
       reload();
     } catch (e: any) {
-      toast.error(e.message || "Erro ao cancelar");
+      toast.error(`Falha ao cancelar: ${extractError(e)}`);
     } finally {
       setBusy(null);
     }
@@ -291,21 +307,27 @@ const SubscriptionsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () =
                     <Button
                       size="sm"
                       variant="neon-outline"
-                      disabled={busy === t.id}
+                      disabled={busy?.id === t.id}
                       onClick={() => renew(t)}
                       title="Renovar +30 dias"
                     >
-                      <RefreshCw className="h-3 w-3" /> Renovar
+                      {busy?.id === t.id && busy.action === "renew"
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <RefreshCw className="h-3 w-3" />}
+                      {busy?.id === t.id && busy.action === "renew" ? "Renovando..." : "Renovar"}
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
-                      disabled={busy === t.id || t.status === "cancelled"}
+                      disabled={busy?.id === t.id || t.status === "cancelled"}
                       onClick={() => cancel(t)}
                       title="Cancelar assinatura"
                       className="text-red-400 hover:text-red-300"
                     >
-                      <Ban className="h-3 w-3" /> Cancelar
+                      {busy?.id === t.id && busy.action === "cancel"
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <Ban className="h-3 w-3" />}
+                      {busy?.id === t.id && busy.action === "cancel" ? "Cancelando..." : "Cancelar"}
                     </Button>
                   </div>
                 </TableCell>
@@ -349,7 +371,7 @@ const Master = () => {
           <div className="flex-1 p-4 md:p-6 overflow-auto">
             {section === "dashboard" && <DashboardTab tenants={tenants} />}
             {section === "tenants" && <TenantsTab tenants={tenants} reload={load} />}
-            {section === "subscriptions" && <SubscriptionsTab tenants={tenants} reload={load} />}
+            {section === "subscriptions" && <SubscriptionsTab tenants={tenants} reload={load} setTenants={setTenants} />}
           </div>
         </main>
       </div>
