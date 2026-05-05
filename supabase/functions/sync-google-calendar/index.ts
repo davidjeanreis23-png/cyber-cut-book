@@ -7,8 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const CALENDAR_ID = "davidjeanreis.29@gmail.com";
-
 async function getServiceAccountToken(): Promise<string> {
   console.log("=== INÍCIO: getServiceAccountToken ===");
 
@@ -149,8 +147,8 @@ serve(async (req) => {
         const accessToken = await getServiceAccountToken();
         console.log("Auth inicializado com sucesso");
 
-        const calendarId = encodeURIComponent(CALENDAR_ID);
-        const listUrl = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?maxResults=3&orderBy=startTime&singleEvents=true&timeMin=${new Date().toISOString()}`;
+        const calendarIdEncoded = encodeURIComponent(CALENDAR_ID);
+        const listUrl = `https://www.googleapis.com/calendar/v3/calendars/${calendarIdEncoded}/events?maxResults=3&orderBy=startTime&singleEvents=true&timeMin=${new Date().toISOString()}`;
         console.log("Testando acesso ao calendário:", CALENDAR_ID);
 
         const listRes = await fetch(listUrl, {
@@ -208,21 +206,9 @@ serve(async (req) => {
     console.log("Buscando appointment_id:", appointment_id);
     const { data: appt, error: apptError } = await supabaseAdmin
       .from("appointments")
-      .select("*, barbers(name), services(name, duration_minutes)")
+      .select("*, barbers(name, tenant_id), services(name, duration_minutes)")
       .eq("id", appointment_id)
       .maybeSingle();
-
-    // Fetch profile separately (no FK between appointments and profiles)
-    let profile: { full_name: string | null; email: string | null } | null = null;
-    if (appt?.user_id) {
-      const { data: prof } = await supabaseAdmin
-        .from("profiles")
-        .select("full_name, email")
-        .eq("id", appt.user_id)
-        .maybeSingle();
-      profile = prof;
-      console.log("Profile encontrado:", !!prof);
-    }
 
     if (apptError) {
       console.error("Erro ao buscar appointment:", apptError.message, apptError);
@@ -240,16 +226,48 @@ serve(async (req) => {
       });
     }
 
-    console.log("Appointment encontrado:", { id: appt.id, date: appt.appointment_date, time: appt.appointment_time, status: appt.status });
+    // Fetch tenant's google_calendar_id
+    const tenantId = (appt as any).barbers?.tenant_id;
+    let calendarIdEncoded = "";
+    if (tenantId) {
+      const { data: tenant } = await supabaseAdmin
+        .from("tenants")
+        .select("google_calendar_id")
+        .eq("id", tenantId)
+        .maybeSingle();
+      calendarIdEncoded = tenant?.google_calendar_id || "";
+    }
+
+    if (!calendarIdEncoded) {
+      console.error("Calendar não configurado para tenant:", tenantId);
+      return new Response(JSON.stringify({ error: "Google Calendar não configurado para esta barbearia" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Fetch profile separately (no FK between appointments and profiles)
+    let profile: { full_name: string | null; email: string | null } | null = null;
+    if (appt?.user_id) {
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", appt.user_id)
+        .maybeSingle();
+      profile = prof;
+      console.log("Profile encontrado:", !!prof);
+    }
+
+    console.log("Appointment encontrado:", { id: appt.id, date: appt.appointment_date, time: appt.appointment_time, status: appt.status, calendarIdEncoded });
 
     let calAction = action || "create";
-    const calendarId = encodeURIComponent(CALENDAR_ID);
+    const calendarIdEncodedEncoded = encodeURIComponent(calendarIdEncoded);
 
     // DELETE event
     if (calAction === "delete" && appt.google_event_id && !appt.google_event_id.startsWith("pending_")) {
       console.log("Deletando evento:", appt.google_event_id);
       const deleteRes = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${appt.google_event_id}`,
+        `https://www.googleapis.com/calendar/v3/calendars/${calendarIdEncoded}/events/${appt.google_event_id}`,
         { method: "DELETE", headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
@@ -288,7 +306,7 @@ serve(async (req) => {
 
       console.log("Atualizando evento:", appt.google_event_id);
       const updateRes = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${appt.google_event_id}`,
+        `https://www.googleapis.com/calendar/v3/calendars/${calendarIdEncoded}/events/${appt.google_event_id}`,
         {
           method: "PUT",
           headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -327,7 +345,7 @@ serve(async (req) => {
     console.log("Criando evento:", JSON.stringify(event, null, 2));
 
     const createRes = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`,
+      `https://www.googleapis.com/calendar/v3/calendars/${calendarIdEncoded}/events`,
       {
         method: "POST",
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
