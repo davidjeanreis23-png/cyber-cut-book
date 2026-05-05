@@ -371,7 +371,7 @@ const Master = () => {
           <div className="flex-1 p-4 md:p-6 overflow-auto">
             {section === "dashboard" && <DashboardTab tenants={tenants} />}
             {section === "tenants" && <TenantsTab tenants={tenants} reload={load} />}
-            {section === "subscriptions" && <SubscriptionsTab tenants={tenants} reload={load} />}
+            {section === "subscriptions" && <SubscriptionsTab tenants={tenants} reload={load} setTenants={setTenants} />}
           </div>
         </main>
       </div>
