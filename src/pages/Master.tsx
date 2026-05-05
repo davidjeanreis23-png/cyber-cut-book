@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Crown, Building2, DollarSign, Clock, CheckCircle2, XCircle, Ban, RefreshCw, Loader2 } from "lucide-react";
+import { Plus, Crown, Building2, DollarSign, Clock, CheckCircle2, XCircle, Ban, RefreshCw, Loader2, Pencil, KeyRound } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 
 interface Tenant {
