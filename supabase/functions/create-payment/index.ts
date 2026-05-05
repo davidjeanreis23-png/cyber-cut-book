@@ -38,6 +38,20 @@ serve(async (req) => {
       });
     }
 
+    if (typeof price !== "number" || price <= 0) {
+      return new Response(JSON.stringify({ error: "Preço inválido" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (typeof payer_email !== "string" || !payer_email.includes("@")) {
+      return new Response(JSON.stringify({ error: "E-mail inválido" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const ACCESS_TOKEN = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
     if (!ACCESS_TOKEN) {
       return new Response(JSON.stringify({ error: "Mercado Pago não configurado" }), {
