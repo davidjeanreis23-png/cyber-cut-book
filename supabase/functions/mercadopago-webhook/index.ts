@@ -161,12 +161,19 @@ Deno.serve(async (req) => {
         .eq("id", externalRef)
         .maybeSingle();
 
-      if (appt) {
+if (appt) {
         if (status === "approved" && appt.payment_status !== "paid") {
           await supabase
             .from("appointments")
             .update({ payment_status: "paid", status: "confirmed" })
             .eq("id", externalRef);
+
+          // Get appointment details for email/calendar sync
+          const { data: apptDetails } = await supabase
+            .from("appointments")
+            .select("*, barbers(name), services(name)")
+            .eq("id", externalRef)
+            .maybeSingle();
 
           await supabase.from("notifications").insert({
             user_id: appt.user_id,
@@ -175,6 +182,42 @@ Deno.serve(async (req) => {
             type: "success",
             appointment_id: externalRef,
           });
+
+          // Send confirmation email after payment
+          const { data: userData } = await supabase
+            .from("users")
+            .select("email")
+            .eq("id", appt.user_id)
+            .maybeSingle();
+
+          if (userData?.email && apptDetails) {
+            try {
+              await supabase.functions.invoke("send-booking-email", {
+                body: {
+                  to: userData.email,
+                  subject: "Confirmação de Agendamento - AutoBarber",
+                  appointment: {
+                    barber_name: apptDetails.barbers?.name,
+                    service_name: apptDetails.services?.name,
+                    date: new Date(apptDetails.appointment_date).toLocaleDateString("pt-BR"),
+                    time: apptDetails.appointment_time,
+                    price: apptDetails.services?.price,
+                  },
+                },
+              });
+            } catch (e) {
+              console.error("[mp-webhook] email error", e);
+            }
+          }
+
+          // Sync with Google Calendar after payment
+          try {
+            await supabase.functions.invoke("sync-google-calendar", {
+              body: { appointment_id: externalRef },
+            });
+          } catch (e) {
+            console.error("[mp-webhook] calendar sync error", e);
+          }
         } else if (status === "refunded" || status === "cancelled") {
           await supabase
             .from("appointments")

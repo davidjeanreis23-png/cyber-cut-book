@@ -186,44 +186,47 @@ const Booking = () => {
       return;
     }
 
-    // Send confirmation email
-    try {
-      await supabase.functions.invoke("send-booking-email", {
-        body: {
-          to: user.email,
-          subject: "Confirmação de Agendamento - AutoBarber",
-          appointment: {
-            barber_name: selectedBarberData?.name,
-            service_name: selectedServiceData?.name,
-            date: format(selectedDate, "dd/MM/yyyy"),
-            time: selectedTime,
-            price: selectedServiceData?.price,
+    // Send confirmation email/push only for cash payments
+    // For online payments, this will be sent after payment is confirmed via webhook
+    if (paymentMethod === "cash") {
+      try {
+        await supabase.functions.invoke("send-booking-email", {
+          body: {
+            to: user.email,
+            subject: "Confirmação de Agendamento - AutoBarber",
+            appointment: {
+              barber_name: selectedBarberData?.name,
+              service_name: selectedServiceData?.name,
+              date: format(selectedDate, "dd/MM/yyyy"),
+              time: selectedTime,
+              price: selectedServiceData?.price,
+            },
           },
-        },
-      });
-    } catch (e) {
-      console.error("Email error:", e);
-    }
+        });
+      } catch (e) {
+        console.error("Email error:", e);
+      }
 
-    // Send Web Push (best-effort)
-    try {
-      await supabase.functions.invoke("send-push", {
-        body: {
-          user_id: user.id,
-          title: "✅ Agendamento confirmado",
-          message: `${selectedServiceData?.name} com ${selectedBarberData?.name} em ${format(selectedDate, "dd/MM/yyyy")} às ${selectedTime}.`,
-          url: "/appointments",
-        },
-      });
-    } catch (e) { console.error("Push error:", e); }
+      // Send Web Push (best-effort)
+      try {
+        await supabase.functions.invoke("send-push", {
+          body: {
+            user_id: user.id,
+            title: "✅ Agendamento confirmado",
+            message: `${selectedServiceData?.name} com ${selectedBarberData?.name} em ${format(selectedDate, "dd/MM/yyyy")} às ${selectedTime}.`,
+            url: "/appointments",
+          },
+        });
+      } catch (e) { console.error("Push error:", e); }
 
-    // Sync with Google Calendar
-    try {
-      await supabase.functions.invoke("sync-google-calendar", {
-        body: { appointment_id: newAppt.id },
-      });
-    } catch (e) {
-      console.error("Calendar sync error:", e);
+      // Sync with Google Calendar
+      try {
+        await supabase.functions.invoke("sync-google-calendar", {
+          body: { appointment_id: newAppt.id },
+        });
+      } catch (e) {
+        console.error("Calendar sync error:", e);
+      }
     }
 
     // If online payment, create Mercado Pago preference
@@ -249,7 +252,11 @@ const Booking = () => {
       }
     }
 
-    toast.success("Agendamento confirmado!");
+    if (paymentMethod === "cash") {
+      toast.success("Agendamento confirmado!");
+    } else {
+      toast.success("Aguarde a confirmação do pagamento!");
+    }
     navigate("/appointments");
     setSubmitting(false);
   };
