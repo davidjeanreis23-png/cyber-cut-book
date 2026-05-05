@@ -206,20 +206,34 @@ const TenantsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () => void
 };
 
 // ─── Subscriptions Tab ───
-const SubscriptionsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () => void }) => {
-  const [busy, setBusy] = useState<string | null>(null);
+const SubscriptionsTab = ({ tenants, reload, setTenants }: { tenants: Tenant[]; reload: () => void; setTenants: React.Dispatch<React.SetStateAction<Tenant[]>> }) => {
+  const [busy, setBusy] = useState<{ id: string; action: "renew" | "cancel" } | null>(null);
+
+  const extractError = (e: any): string => {
+    // Supabase functions.invoke errors often hide the body in e.context
+    const ctx = e?.context;
+    if (ctx?.body) {
+      try {
+        const parsed = typeof ctx.body === "string" ? JSON.parse(ctx.body) : ctx.body;
+        if (parsed?.error) return parsed.error;
+      } catch { /* ignore */ }
+    }
+    return e?.message || "Erro desconhecido";
+  };
 
   const renew = async (t: Tenant) => {
-    setBusy(t.id);
+    setBusy({ id: t.id, action: "renew" });
     try {
-      const { error } = await supabase.functions.invoke("renew-subscription-manual", {
+      const { data, error } = await supabase.functions.invoke("renew-subscription-manual", {
         body: { tenant_id: t.id, days: 30 },
       });
       if (error) throw error;
-      toast.success("Renovado +30 dias");
+      // Optimistic update
+      setTenants((prev) => prev.map((x) => x.id === t.id ? { ...x, status: "active", paid_until: data?.paid_until ?? x.paid_until } : x));
+      toast.success(`"${t.name}" renovada por +30 dias`);
       reload();
     } catch (e: any) {
-      toast.error(e.message || "Erro ao renovar");
+      toast.error(`Falha ao renovar: ${extractError(e)}`);
     } finally {
       setBusy(null);
     }
@@ -227,16 +241,18 @@ const SubscriptionsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () =
 
   const cancel = async (t: Tenant) => {
     if (!confirm(`Cancelar a assinatura de "${t.name}"? Isso bloqueia o acesso e cancela no Mercado Pago.`)) return;
-    setBusy(t.id);
+    setBusy({ id: t.id, action: "cancel" });
     try {
       const { error } = await supabase.functions.invoke("cancel-subscription", {
         body: { tenant_id: t.id },
       });
       if (error) throw error;
-      toast.success("Assinatura cancelada");
+      // Optimistic update
+      setTenants((prev) => prev.map((x) => x.id === t.id ? { ...x, status: "cancelled" } : x));
+      toast.success(`Assinatura de "${t.name}" cancelada`);
       reload();
     } catch (e: any) {
-      toast.error(e.message || "Erro ao cancelar");
+      toast.error(`Falha ao cancelar: ${extractError(e)}`);
     } finally {
       setBusy(null);
     }
