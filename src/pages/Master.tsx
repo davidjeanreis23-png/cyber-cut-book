@@ -113,6 +113,20 @@ const TenantsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () => void
     address: "", city: "", state: "",
   });
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState<Tenant | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "", owner_name: "", email: "", phone: "",
+    status: "trial" as Tenant["status"],
+    trial_start: "", trial_end: "", paid_until: "",
+  });
+  const [editSaving, setEditSaving] = useState(false);
+
+  const [pwdOpen, setPwdOpen] = useState(false);
+  const [pwdTenant, setPwdTenant] = useState<Tenant | null>(null);
+  const [pwdValue, setPwdValue] = useState("");
+  const [pwdSaving, setPwdSaving] = useState(false);
+
   const submit = async () => {
     if (!form.name || !form.owner_name || !form.email) {
       toast.error("Nome, responsável e e-mail são obrigatórios");
@@ -137,6 +151,81 @@ const TenantsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () => void
     const { error } = await supabase.from("tenants").update({ status }).eq("id", id);
     if (error) toast.error(error.message);
     else { toast.success("Status atualizado"); reload(); }
+  };
+
+  const openEdit = (t: Tenant) => {
+    setEditing(t);
+    setEditForm({
+      name: t.name,
+      owner_name: t.owner_name,
+      email: t.email,
+      phone: t.phone || "",
+      status: t.status,
+      trial_start: "",
+      trial_end: t.trial_end ? t.trial_end.slice(0, 10) : "",
+      paid_until: t.paid_until ? t.paid_until.slice(0, 10) : "",
+    });
+    supabase.from("tenants").select("trial_start").eq("id", t.id).maybeSingle().then(({ data }) => {
+      if (data?.trial_start) setEditForm((f) => ({ ...f, trial_start: String(data.trial_start).slice(0, 10) }));
+    });
+    setEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setEditSaving(true);
+    try {
+      const payload: any = {
+        name: editForm.name,
+        owner_name: editForm.owner_name,
+        email: editForm.email,
+        phone: editForm.phone || null,
+        status: editForm.status,
+        trial_start: editForm.trial_start ? new Date(editForm.trial_start).toISOString() : null,
+        trial_end: editForm.trial_end ? new Date(editForm.trial_end).toISOString() : null,
+        paid_until: editForm.paid_until ? new Date(editForm.paid_until).toISOString() : null,
+      };
+      const { error } = await supabase.from("tenants").update(payload).eq("id", editing.id);
+      if (error) throw error;
+      toast.success("Barbearia atualizada");
+      setEditOpen(false);
+      reload();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao salvar");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const openPwd = (t: Tenant) => {
+    setPwdTenant(t);
+    setPwdValue("");
+    setPwdOpen(true);
+  };
+
+  const savePwd = async () => {
+    if (!pwdTenant) return;
+    if (pwdValue.length < 6) { toast.error("Senha mínima de 6 caracteres"); return; }
+    setPwdSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("update-tenant-password", {
+        body: { tenant_id: pwdTenant.id, new_password: pwdValue },
+      });
+      if (error) {
+        const ctx: any = (error as any)?.context;
+        let msg = error.message;
+        if (ctx?.body) {
+          try { const p = typeof ctx.body === "string" ? JSON.parse(ctx.body) : ctx.body; if (p?.error) msg = p.error; } catch {}
+        }
+        throw new Error(msg);
+      }
+      toast.success(`Senha atualizada para ${(data?.updated || []).join(", ")}`);
+      setPwdOpen(false);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao atualizar senha");
+    } finally {
+      setPwdSaving(false);
+    }
   };
 
   return (
@@ -172,14 +261,15 @@ const TenantsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () => void
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Cidade</TableHead>
               <TableHead>Cadastro</TableHead>
+              <TableHead>Trial Fim</TableHead>
+              <TableHead>Pago até</TableHead>
               <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {tenants.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Nenhuma barbearia ainda. Clique em "Nova Barbearia".</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Nenhuma barbearia ainda.</TableCell></TableRow>
             ) : tenants.map((t) => (
               <TableRow key={t.id}>
                 <TableCell>
@@ -187,10 +277,13 @@ const TenantsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () => void
                   <div className="text-xs text-muted-foreground">{t.email}</div>
                 </TableCell>
                 <TableCell><StatusBadge status={t.status} trialEnd={t.trial_end} /></TableCell>
-                <TableCell>{t.city || "—"}{t.state ? `/${t.state}` : ""}</TableCell>
-                <TableCell>{format(new Date(t.created_at), "dd/MM/yyyy")}</TableCell>
+                <TableCell className="text-xs">{format(new Date(t.created_at), "dd/MM/yyyy")}</TableCell>
+                <TableCell className="text-xs">{t.trial_end ? format(new Date(t.trial_end), "dd/MM/yyyy") : "—"}</TableCell>
+                <TableCell className="text-xs">{t.paid_until ? format(new Date(t.paid_until), "dd/MM/yyyy") : "—"}</TableCell>
                 <TableCell>
                   <div className="flex gap-1 flex-wrap">
+                    <Button size="sm" variant="ghost" onClick={() => openEdit(t)} title="Editar"><Pencil className="h-4 w-4 text-primary" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => openPwd(t)} title="Alterar senha"><KeyRound className="h-4 w-4 text-yellow-400" /></Button>
                     <Button size="sm" variant="ghost" onClick={() => updateStatus(t.id, "active")} title="Ativar"><CheckCircle2 className="h-4 w-4 text-green-400" /></Button>
                     <Button size="sm" variant="ghost" onClick={() => updateStatus(t.id, "blocked")} title="Bloquear"><Ban className="h-4 w-4 text-red-400" /></Button>
                     <Button size="sm" variant="ghost" onClick={() => updateStatus(t.id, "cancelled")} title="Cancelar"><XCircle className="h-4 w-4 text-gray-400" /></Button>
@@ -201,6 +294,56 @@ const TenantsTab = ({ tenants, reload }: { tenants: Tenant[]; reload: () => void
           </TableBody>
         </Table>
       </GlassCard>
+
+      {/* Edit dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Editar Barbearia</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2"><Label>Nome</Label><Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} /></div>
+            <div className="col-span-2"><Label>Responsável</Label><Input value={editForm.owner_name} onChange={(e) => setEditForm({ ...editForm, owner_name: e.target.value })} /></div>
+            <div><Label>E-mail</Label><Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} /></div>
+            <div><Label>Telefone</Label><Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} /></div>
+            <div className="col-span-2">
+              <Label>Status</Label>
+              <select
+                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                value={editForm.status}
+                onChange={(e) => setEditForm({ ...editForm, status: e.target.value as Tenant["status"] })}
+              >
+                <option value="trial">Trial</option>
+                <option value="active">Ativo</option>
+                <option value="blocked">Bloqueado</option>
+                <option value="cancelled">Cancelado</option>
+              </select>
+            </div>
+            <div><Label>Trial Início</Label><Input type="date" value={editForm.trial_start} onChange={(e) => setEditForm({ ...editForm, trial_start: e.target.value })} /></div>
+            <div><Label>Trial Fim</Label><Input type="date" value={editForm.trial_end} onChange={(e) => setEditForm({ ...editForm, trial_end: e.target.value })} /></div>
+            <div className="col-span-2"><Label>Pago até (assinatura)</Label><Input type="date" value={editForm.paid_until} onChange={(e) => setEditForm({ ...editForm, paid_until: e.target.value })} /></div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Use estas datas para controlar testes — ex.: Início 20/04/2026, Fim 22/04/2026. O acesso é bloqueado automaticamente quando "Trial Fim" passa (status=trial) ou "Pago até" expira.
+          </p>
+          <Button variant="neon" onClick={saveEdit} disabled={editSaving} className="w-full">
+            {editSaving ? "Salvando..." : "Salvar alterações"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password dialog */}
+      <Dialog open={pwdOpen} onOpenChange={setPwdOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Definir senha — {pwdTenant?.name}</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <Label>Nova senha (mínimo 6 caracteres)</Label>
+            <Input type="text" value={pwdValue} onChange={(e) => setPwdValue(e.target.value)} placeholder="Nova senha de acesso" />
+            <p className="text-xs text-muted-foreground">Aplicada ao admin desta barbearia ({pwdTenant?.email}).</p>
+          </div>
+          <Button variant="neon" onClick={savePwd} disabled={pwdSaving} className="w-full">
+            {pwdSaving ? "Atualizando..." : "Atualizar senha"}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
