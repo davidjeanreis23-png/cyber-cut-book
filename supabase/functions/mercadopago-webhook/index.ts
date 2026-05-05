@@ -169,19 +169,12 @@ if (appt) {
             .eq("id", externalRef);
 
           // Get appointment details for email/calendar sync
+          // Note: Push notification is sent by trigger when payment_status changes to 'paid'
           const { data: apptDetails } = await supabase
             .from("appointments")
             .select("*, barbers(name), services(name)")
             .eq("id", externalRef)
             .maybeSingle();
-
-          await supabase.from("notifications").insert({
-            user_id: appt.user_id,
-            title: "💰 Pagamento confirmado!",
-            message: `Pagamento de R$ ${Number(amount).toFixed(2)} recebido. Seu agendamento está garantido.`,
-            type: "success",
-            appointment_id: externalRef,
-          });
 
           // Send confirmation email after payment
           const { data: userData } = await supabase
